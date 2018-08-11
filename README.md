@@ -5,9 +5,9 @@ Transfer Protocol: RFC 913 (https://tools.ietf.org/html/rfc913)
 
 | COMMAND | Client | Server |
 | :---         |     :---:      |          ---: |
-| USER   | -     | -    |
-| ACCT   | -     | -    |
-| PASS   | -     | -    |
+| USER   | Y     | Y    |
+| ACCT   | Y     | Y    |
+| PASS   | Y     | Y    |
 | TYPE   | -     | -    |
 | LIST   | -     | -    |
 | CDIR   | -     | -    |
