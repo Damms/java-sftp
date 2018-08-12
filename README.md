@@ -13,6 +13,6 @@ Transfer Protocol: RFC 913 (https://tools.ietf.org/html/rfc913)
 | CDIR   | -     | -    |
 | KILL   | -     | -    |
 | NAME   | -     | -    |
-| DONE   | -     | -    |
+| DONE   | Y     | Y    |
 | RETR   | -     | -    |
 | STOR   | -     | -    |

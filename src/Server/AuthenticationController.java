@@ -220,4 +220,14 @@ public class AuthenticationController {
         
     }
     
+    public void reset() {
+        authenticated = false;
+        userVerified = false;
+        userAcct = false;
+        userPass = false;
+        user = "";
+        acct = "";
+        pass = "";
+    }
+    
 }

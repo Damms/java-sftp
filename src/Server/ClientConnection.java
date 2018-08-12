@@ -34,10 +34,12 @@ public class ClientConnection extends Thread {
     //String txtContent;
     Socket connectionSocket;
     File file;
+    boolean connected;
 
     
     ClientConnection(Socket socket){
         this.connectionSocket = socket;
+        this.connected = true;
         createConnections();
         try {
             outToClient.writeBytes("+MIT-localhost SFTP Service\n");
@@ -51,69 +53,64 @@ public class ClientConnection extends Thread {
     @Override
     public void run() { // run when call start
 	
-	while(true) { // exit when done 
+	while(connected) {             
             
-            String authenticationRespone;
+            try { // exit when done 
             
-            // original
-            System.out.println("WAITING FOR INPUT");
-            try { 
-                clientSentence = inFromClient.readLine();
-            } catch (IOException ex) {
-                Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            
-            System.out.println("GOT INPUT: " + clientSentence);
-            
-            String[] clientCommands = clientSentence.split(" ");
-            
-            if(null == clientCommands[0]){
-                System.out.println("INVALID COMMAND");
-            }
-            else switch (clientCommands[0]) {
-                
-                case "USER":
-                    try {
+                String authenticationRespone;
+
+                // original
+                System.out.println("WAITING FOR INPUT");
+                try { 
+                    clientSentence = inFromClient.readLine();
+                } catch (IOException ex) {
+                    Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+                System.out.println("GOT INPUT: " + clientSentence);
+
+                String[] clientCommands = clientSentence.split(" ");
+
+                if(null == clientCommands[0]){
+                    System.out.println("INVALID COMMAND");
+                }
+                else switch (clientCommands[0]) {
+
+                    case "USER":
                         authenticationRespone = authenticationController.USER(clientCommands);
                         outToClient.writeBytes(authenticationRespone + '\n');
-                    } catch (IOException ex) {
-                        Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
-                    }   break;
-                    
-                case "ACCT":
-                    try {
+                        break;
+
+                    case "ACCT":
                         authenticationRespone = authenticationController.ACCT(clientCommands);
                         outToClient.writeBytes(authenticationRespone + '\n');
-                    } catch (IOException ex) {
-                        Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
-                    }   break;
-                    
-                case "PASS":
-                    try {
+                        break;
+
+                    case "PASS":
                         authenticationRespone = authenticationController.PASS(clientCommands);
                         outToClient.writeBytes(authenticationRespone + '\n');
-                    } catch (IOException ex) {
-                        Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
-                    }   break;
-                    
-                case "TYPE":
-                    try {
+                        break;
+
+                    case "TYPE":
                         if(authenticationController.authenticated){
                             TYPE(clientCommands);
                         } else {
                             outToClient.writeBytes("Please log in: " + '\n');
                         }
-                    } catch (IOException ex) {
-                        Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
-                    }   break;
-                    
-                default:
-                    System.out.println("INVALID COMMAND");
-                    break;
-                    
-            }
+                        break;
+
+                    case "DONE":
+                        DONE();
+
+                    default:
+                        System.out.println("INVALID COMMAND");
+                        break;
+
+                }
             
-            // if "DONE" clientSocket.close() exit while loop
+            } catch (IOException ex) {
+                Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
+            }
 	    
         } 
         
@@ -166,6 +163,12 @@ public class ClientConnection extends Thread {
                 break;
         }
         
+    }
+
+    private void DONE() throws IOException {
+        authenticationController.reset();
+        connected = false;
+        outToClient.writeBytes("+Connection closed" + '\n');
     }
        
 }

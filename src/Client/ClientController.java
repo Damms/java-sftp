@@ -23,9 +23,11 @@ public class ClientController {
     BufferedReader inFromUser;
     BufferedReader inFromServer;
     DataOutputStream outToServer;
+    Socket clientSocket = null; 
+    boolean connected = false;
     
     public void run() throws IOException {
-        boolean connected = false;
+        
         createConnections();
         String userCommand;
         
@@ -57,19 +59,23 @@ public class ClientController {
                 case "TYPE":
                     TYPE(userCommand);
                     break;
+                case "DONE":
+                    DONE(userCommand);
+                    break;
                 default:
                     System.out.println("INVALID COMMAND");
                     break;
             }
+            
         }
         
-        System.out.println("Connection terminated.");
+        System.out.println("Client will now close");
         
     }
     
     private void createConnections() throws IOException {
         
-        Socket clientSocket = null; 
+        
         try {
             clientSocket = new Socket("localhost", 6789);
         } catch (IOException ex) {
@@ -119,6 +125,15 @@ public class ClientController {
         String serverResponse = inFromServer.readLine(); 
         System.out.println("FROM SERVER: " + serverResponse); 
 
+    }
+    
+    private void DONE(String command) throws IOException {
+
+        outToServer.writeBytes(command + '\n'); 
+        String serverResponse = inFromServer.readLine(); 
+        System.out.println("FROM SERVER: " + serverResponse); 
+        clientSocket.close();
+        connected = false;
     }
     
 }
