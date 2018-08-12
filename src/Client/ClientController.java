@@ -58,6 +58,7 @@ public class ClientController {
                     TYPE(userCommand);
                     break;
                 default:
+                    System.out.println("INVALID COMMAND");
                     break;
             }
         }

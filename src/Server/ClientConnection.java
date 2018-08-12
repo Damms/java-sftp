@@ -146,14 +146,26 @@ public class ClientConnection extends Thread {
     }
     
     private void TYPE(String[] clientCommands) throws IOException{
-        if("A".equals(clientCommands[1]) || "B".equals(clientCommands[1]) || "C".equals(clientCommands[1])) {
-            TYPE_TEXT = clientCommands[1];
-            outToClient.writeBytes("Changed to TYPE: " + TYPE_TEXT + '\n');
-        } else {
-            outToClient.writeBytes("Requested unsupported TYPE, supported TYPES are A, B, C" + '\n');
+        if(null == clientCommands[1]) {
+            outToClient.writeBytes("-Type not valid" + '\n');
+        } else switch (clientCommands[1]) {
+            case "A":
+                TYPE_TEXT = "Ascii";
+                outToClient.writeBytes("+Using { " + TYPE_TEXT + " } mode" + '\n');
+                break;
+            case "B":
+                TYPE_TEXT = "Binary";
+                outToClient.writeBytes("+Using { " + TYPE_TEXT + " } mode" + '\n');
+                break;
+            case "C":
+                TYPE_TEXT = "Continuous";
+                outToClient.writeBytes("+Using { " + TYPE_TEXT + " } mode" + '\n');
+                break;
+            default:
+                outToClient.writeBytes("-Type not valid" + '\n');
+                break;
         }
         
-
     }
        
 }
