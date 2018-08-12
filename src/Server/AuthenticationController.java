@@ -22,6 +22,7 @@ public class AuthenticationController {
     
     BufferedReader reader = null;
     File file;
+    boolean authenticated = false;
     boolean userVerified = false;
     boolean userAcct = false;
     boolean userPass = false;
@@ -30,13 +31,7 @@ public class AuthenticationController {
     String pass = "";
     
     AuthenticationController(){
-        // Database Connection
-        file = new File(databasePath);
-        if(file.exists() && !file.isDirectory()) { 
-            System.out.println("Database file found :)");
-        } else {
-            System.out.println("Databse file not found.");
-        }
+        connectToDatabase();
     }
     
     public String USER(String[] clientCommands) throws IOException {
@@ -60,11 +55,15 @@ public class AuthenticationController {
                 if(clientCommands[1].equals(lineDets[0])){
                     userFound = true;
                     user = lineDets[0];
+                    // check if need user name and pass to log in 
+                    // authenticated = true;
                 }
                 //outToClient.writeBytes(line + '\n');
             }
 
-            if(userFound){
+            if(authenticated){
+                returnStatement = "!<user-id> logged in";
+            } else if (userFound){
                 userVerified = true;
                 returnStatement = "+User-id valid, send account and password";
             } else {
@@ -92,7 +91,7 @@ public class AuthenticationController {
         boolean acctFound = false;
         String returnStatement = null;
         
-        if(userAcct && userPass){
+        if(authenticated){
             //outToClient.writeBytes("!<user-id> logged in" + '\n');
             returnStatement = "!<user-id> logged in";
         } 
@@ -123,6 +122,7 @@ public class AuthenticationController {
                 if(acctFound){
                     userAcct = true;
                     if(userPass){
+                        authenticated = true;
                         returnStatement = "! Account valid, logged-in";
                     } else {
                         returnStatement = "+Account valid, send password";
@@ -153,7 +153,7 @@ public class AuthenticationController {
         boolean passFound = false;
         String returnStatement = null;
         
-        if(userAcct && userPass){
+        if(authenticated){
             //outToClient.writeBytes("!<user-id> logged in" + '\n');
             returnStatement = "!<user-id> logged in";
         } else {
@@ -183,6 +183,7 @@ public class AuthenticationController {
                 if(passFound){
                     userPass = true;
                     if(userAcct){
+                        authenticated = true;
                         returnStatement = "! Logged in";
                     } else {
                         returnStatement = "+Send account";
@@ -204,6 +205,18 @@ public class AuthenticationController {
         }
         
         return returnStatement;
+        
+    }
+
+    private void connectToDatabase() {
+        
+        // Database Connection
+        file = new File(databasePath);
+        if(file.exists() && !file.isDirectory()) { 
+            System.out.println("Database file found :)");
+        } else {
+            System.out.println("Databse file not found.");
+        }
         
     }
     

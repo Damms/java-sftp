@@ -8,7 +8,7 @@ Transfer Protocol: RFC 913 (https://tools.ietf.org/html/rfc913)
 | USER   | Y     | Y    |
 | ACCT   | Y     | Y    |
 | PASS   | Y     | Y    |
-| TYPE   | -     | -    |
+| TYPE   | Y     | Y    |
 | LIST   | -     | -    |
 | CDIR   | -     | -    |
 | KILL   | -     | -    |

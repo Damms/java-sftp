@@ -54,6 +54,9 @@ public class ClientController {
                 case "PASS":
                     PASS(userCommand);
                     break;
+                case "TYPE":
+                    TYPE(userCommand);
+                    break;
                 default:
                     break;
             }
@@ -102,6 +105,14 @@ public class ClientController {
     }
     
     private void PASS(String command) throws IOException {
+
+        outToServer.writeBytes(command + '\n'); 
+        String serverResponse = inFromServer.readLine(); 
+        System.out.println("FROM SERVER: " + serverResponse); 
+
+    }
+    
+    private void TYPE(String command) throws IOException {
 
         outToServer.writeBytes(command + '\n'); 
         String serverResponse = inFromServer.readLine(); 

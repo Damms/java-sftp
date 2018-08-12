@@ -30,6 +30,7 @@ public class ClientConnection extends Thread {
     DataOutputStream  outToClient = null;
     String clientSentence; 
     String capitalizedSentence; 
+    String TYPE_TEXT;
     //String txtContent;
     Socket connectionSocket;
     File file;
@@ -70,6 +71,7 @@ public class ClientConnection extends Thread {
                 System.out.println("INVALID COMMAND");
             }
             else switch (clientCommands[0]) {
+                
                 case "USER":
                     try {
                         authenticationRespone = authenticationController.USER(clientCommands);
@@ -77,6 +79,7 @@ public class ClientConnection extends Thread {
                     } catch (IOException ex) {
                         Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
                     }   break;
+                    
                 case "ACCT":
                     try {
                         authenticationRespone = authenticationController.ACCT(clientCommands);
@@ -84,6 +87,7 @@ public class ClientConnection extends Thread {
                     } catch (IOException ex) {
                         Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
                     }   break;
+                    
                 case "PASS":
                     try {
                         authenticationRespone = authenticationController.PASS(clientCommands);
@@ -91,9 +95,22 @@ public class ClientConnection extends Thread {
                     } catch (IOException ex) {
                         Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
                     }   break;
+                    
+                case "TYPE":
+                    try {
+                        if(authenticationController.authenticated){
+                            TYPE(clientCommands);
+                        } else {
+                            outToClient.writeBytes("Please log in: " + '\n');
+                        }
+                    } catch (IOException ex) {
+                        Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    }   break;
+                    
                 default:
                     System.out.println("INVALID COMMAND");
                     break;
+                    
             }
             
             // if "DONE" clientSocket.close() exit while loop
@@ -126,6 +143,17 @@ public class ClientConnection extends Thread {
             System.out.println("Databse file not found.");
         }
         
+    }
+    
+    private void TYPE(String[] clientCommands) throws IOException{
+        if("A".equals(clientCommands[1]) || "B".equals(clientCommands[1]) || "C".equals(clientCommands[1])) {
+            TYPE_TEXT = clientCommands[1];
+            outToClient.writeBytes("Changed to TYPE: " + TYPE_TEXT + '\n');
+        } else {
+            outToClient.writeBytes("Requested unsupported TYPE, supported TYPES are A, B, C" + '\n');
+        }
+        
+
     }
        
 }
