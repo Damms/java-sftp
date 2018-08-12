@@ -25,29 +25,42 @@ public class ClientController {
     DataOutputStream outToServer;
     
     public void run() throws IOException {
-        
+        boolean connected = false;
         createConnections();
         String userCommand;
         
-        while(true){
+        String serverResponse = inFromServer.readLine();
+        System.out.println("Response from server: " + serverResponse);
+        if(serverResponse.contains("+MIT")){
+            connected = true;
+            System.out.println("Successfully established connection to server");
+        }
+        
+        while(connected){
 
             userCommand = inFromUser.readLine();
             //System.out.println("GOT USER INPUT: " + userCommand + "\n");
             
             String[] userCommands = userCommand.split(" ");
 
-            if("USER".equals(userCommands[0])){
-                USER(userCommand);
-            }
-            else if("ACCT".equals(userCommands[0])){
-                ACCT(userCommand);
-            }
-            else if("PASS".equals(userCommands[0])){
-                PASS(userCommand);
-            }
-
+            if(null != userCommands[0])switch (userCommands[0]) {
+                case "USER":
+                    USER(userCommand);
+                    break;
             //break;
+                case "ACCT":
+                    ACCT(userCommand);
+                    break;
+                case "PASS":
+                    PASS(userCommand);
+                    break;
+                default:
+                    break;
+            }
         }
+        
+        System.out.println("Connection terminated.");
+        
     }
     
     private void createConnections() throws IOException {
