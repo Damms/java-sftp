@@ -70,6 +70,9 @@ public class ClientController {
                 case "KILL":
                     KILL(userCommand);
                     break;
+                case "NAME":
+                    NAME(userCommand);
+                    break;
                 default:
                     System.out.println("-INVALID COMMAND");
                     break;
@@ -194,6 +197,43 @@ public class ClientController {
         }
         
         
+    }
+
+    private void NAME(String userCommand) throws IOException {
+
+        outToServer.writeBytes(userCommand + '\n'); 
+        String serverResponse = inFromServer.readLine(); 
+        System.out.println("FROM SERVER: " + serverResponse);
+        
+        if("+File exists".equals(serverResponse)){
+            
+            System.out.println("Send command TOBE followed by the new file name");
+            
+            String userCommand2 = inFromUser.readLine();
+            String[] userCommands = userCommand2.split(" ");
+            
+            boolean cont = false;
+            if("TOBE".equals(userCommands[0]) && userCommands.length == 2){
+                cont = true;
+            }
+            
+            while(!cont){
+                
+                System.out.println("-Send command TOBE followed by the new file name");
+                userCommand2 = inFromUser.readLine();
+                userCommands = userCommand2.split(" ");
+                if("TOBE".equals(userCommands[0]) && userCommands.length == 2){
+                    cont = true;
+                }
+                
+            }
+            
+            outToServer.writeBytes(userCommand2 + '\n'); 
+            serverResponse = inFromServer.readLine(); 
+            System.out.println("FROM SERVER: " + serverResponse);
+            
+        }
+
     }
     
 }

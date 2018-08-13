@@ -161,6 +161,18 @@ public class ClientConnection extends Thread {
                             outToClient.writeBytes("-Please log in: " + '\n');
                         }
                         break;
+                        
+                    case "NAME":
+                        if(authenticationController.authenticated){
+                            if(clientCommands.length == 2){
+                                NAME(clientCommands);
+                            } else {
+                                outToClient.writeBytes("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length) + '\n');
+                            }
+                        } else {
+                            outToClient.writeBytes("-Please log in: " + '\n');
+                        }
+                        break;
 
                     case "DONE":
                         DONE();
@@ -426,16 +438,69 @@ public class ClientConnection extends Thread {
     }
     
     private void KILL(String[] clientCommands) throws IOException{
+        
+        // Reference: https://www.geeksforgeeks.org/delete-file-using-java/
         File testFile = new File(currentDir + clientCommands[1]);
         String fileName = testFile.getName();
-        if(testFile.delete())
-        {
+        if(testFile.delete()){
             outToClient.writeBytes("+" + fileName + " deleted" + '\n');
         }
-        else
-        {
+        else{
             outToClient.writeBytes("-Not deleted because" + '\n');
         }
+        
+    }
+    
+    private void NAME(String[] clientCommands) throws IOException{
+        
+        File testFile = new File(currentDir + clientCommands[1]);
+        String oldFileName = testFile.getName();
+        
+        if(testFile.exists()){
+            
+            outToClient.writeBytes("+File exists" + '\n');
+            System.out.println("+File exists" + '\n');
+      
+            clientSentence = inFromClient.readLine();
+            String[] clientCommands2 = clientSentence.split(" ");     
+            boolean cont = false;
+            if("TOBE".equals(clientCommands2[0]) && clientCommands.length == 2){
+                cont = true;
+            }
+            while(!cont){
+                clientSentence = inFromClient.readLine();
+                clientCommands2 = clientSentence.split(" ");
+                if("TOBE".equals(clientCommands2[0]) && clientCommands.length == 2){
+                    cont = true;
+                }
+            }
+            
+            // Reference: https://stackoverflow.com/questions/1158777/rename-a-file-using-java
+            File file2 = new File(currentDir + clientCommands2[1]);
+
+            if (file2.exists()){
+               outToClient.writeBytes("-File wasn't renamed because file with specified name already exists." + '\n');
+               System.out.println("-File wasn't renamed because file with specified name already exists." + '\n');
+            } else {
+                // Rename file (or directory)
+                boolean success = testFile.renameTo(file2);
+
+                if (!success) {
+                   // File was not successfully renamed
+                   outToClient.writeBytes("-File wasn't renamed because " + '\n');
+                   System.out.println("-File wasn't renamed because " + '\n');
+                } else {
+                    outToClient.writeBytes("+" + oldFileName + " renamed to " + file2.getName() + '\n');
+                   System.out.println("+" + oldFileName + " renamed to " + file2.getName() + '\n');
+                }
+            }
+ 
+        }
+        else{
+            outToClient.writeBytes("-Can't find " + clientCommands[1] + '\n');
+            System.out.println("-Can't find " + clientCommands[1] + '\n');
+        }
+        
     }
        
 }
