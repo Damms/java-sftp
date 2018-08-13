@@ -149,6 +149,18 @@ public class ClientConnection extends Thread {
                         }
                         
                         break;
+                        
+                    case "KILL":
+                        if(authenticationController.authenticated){
+                            if(clientCommands.length == 2){
+                                KILL(clientCommands);
+                            } else {
+                                outToClient.writeBytes("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length) + '\n');
+                            }
+                        } else {
+                            outToClient.writeBytes("-Please log in: " + '\n');
+                        }
+                        break;
 
                     case "DONE":
                         DONE();
@@ -341,7 +353,7 @@ public class ClientConnection extends Thread {
         if(clientCommands.length == 1){
             requestedDir = (storageRoot);
         } else {
-            requestedDir = (storageRoot + clientCommands[1]);
+            requestedDir = (storageRoot + clientCommands[1] + "/");
         }
         File testFile = new File(requestedDir);
         
@@ -410,6 +422,19 @@ public class ClientConnection extends Thread {
             currentDir = requestedDir;
             outToClient.writeBytes("!Changed working dir to" + currentDir + '\n');
                 
+        }
+    }
+    
+    private void KILL(String[] clientCommands) throws IOException{
+        File testFile = new File(currentDir + clientCommands[1]);
+        String fileName = testFile.getName();
+        if(testFile.delete())
+        {
+            outToClient.writeBytes("+" + fileName + " deleted" + '\n');
+        }
+        else
+        {
+            outToClient.writeBytes("-Not deleted because" + '\n');
         }
     }
        

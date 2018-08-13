@@ -67,6 +67,9 @@ public class ClientController {
                 case "CDIR":
                     CDIR(userCommand);
                     break;
+                case "KILL":
+                    KILL(userCommand);
+                    break;
                 default:
                     System.out.println("-INVALID COMMAND");
                     break;
@@ -149,6 +152,14 @@ public class ClientController {
             System.out.println("FROM SERVER: " + serverResponse); 
             serverResponse = inFromServer.readLine(); 
         }
+
+    }
+    
+    private void KILL(String command) throws IOException {
+        
+        outToServer.writeBytes(command + '\n'); 
+        String serverResponse = inFromServer.readLine(); 
+        System.out.println("FROM SERVER: " + serverResponse); 
 
     }
 
