@@ -16,6 +16,13 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.text.SimpleDateFormat;
+import java.text.DecimalFormat;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -205,9 +212,9 @@ public class ClientConnection extends Thread {
         
         String requestedDir;
         if(clientCommands.length == 2){ // no requested directory
-            requestedDir = ""; // change to equal current directory when cdir implemented
+            requestedDir = storageRoot + ""; // change to equal current directory when cdir implemented
         } else {
-            requestedDir = clientCommands[2];
+            requestedDir = storageRoot + clientCommands[2];
         }
         
         if(null == clientCommands[1]){
@@ -216,9 +223,11 @@ public class ClientConnection extends Thread {
         }
         
         else switch (clientCommands[1]) {
+            
             case "F":
+                outToClient.writeBytes("+" + requestedDir + '\n');
                 System.out.println("F List");
-                File dir = new File(storageRoot + requestedDir);
+                File dir = new File(requestedDir);
                 File[] filesList = dir.listFiles();
                 for (File fileQuery : filesList) {
                     if (fileQuery.isFile()) {
@@ -227,13 +236,88 @@ public class ClientConnection extends Thread {
                     }
                 }   outToClient.writeBytes("\0" + '\n');
                 break;
+                
             case "V":
+                outToClient.writeBytes("+" + requestedDir + '\n');
+                SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+                DecimalFormat df = new DecimalFormat("#.##"); 
+                String fileName;
+                String fileOwner;
+                String createdDate = " ";
+                String lastModified;
+                String fileSize;
                 System.out.println("V List");
+                File dir2 = new File(requestedDir);
+                File[] filesList2 = dir2.listFiles();
+                
+                for (File fileQuery : filesList2) {
+                    if (fileQuery.isFile()) {
+                        Path filePath = fileQuery.toPath();
+                        fileOwner = Files.getOwner(fileQuery.toPath()).getName();
+                        
+                        // File Size
+                        int multiplication = 1;
+                        double fileSizeDouble = fileQuery.length();
+                        while(fileSizeDouble > 1024 && multiplication < 4){
+                            fileSizeDouble = fileSizeDouble / 1024;
+                            multiplication += 1;
+                        }
+                        
+                        switch (multiplication) {
+                            case 1:
+                                fileSize = ( df.format(fileSizeDouble) + " B" ); //B
+                                break;
+                            case 2:
+                                fileSize = ( df.format(fileSizeDouble) + " KB" ); //B
+                                break;
+                            case 3:
+                                fileSize = ( df.format(fileSizeDouble) + " MB" ); //B
+                                break;
+                            case 4:
+                                fileSize = ( df.format(fileSizeDouble) + " GB" ); //B
+                                break;
+                            default:
+                                fileSize = " ";
+                                break;
+                        }
+                        
+                        // Created Time - Reference: https://stackoverflow.com/questions/2723838/determine-file-creation-date-in-java
+                        
+                        BasicFileAttributes attributes = null;
+                        try
+                        {
+                            attributes =
+                                    Files.readAttributes(filePath, BasicFileAttributes.class);
+                        }
+                        catch (IOException exception)
+                        {
+                            System.out.println("Exception handled when trying to get file " +
+                                    "attributes: " + exception.getMessage());
+                        }
+                        long milliseconds = attributes.creationTime().to(TimeUnit.MILLISECONDS);
+                        if((milliseconds > Long.MIN_VALUE) && (milliseconds < Long.MAX_VALUE))
+                        {
+                            Date creationDate =
+                                    new Date(attributes.creationTime().to(TimeUnit.MILLISECONDS));
+
+                            createdDate = 
+                                    creationDate.getDate() + "/" +
+                                    (creationDate.getMonth() + 1) + "/" +
+                                    (creationDate.getYear() + 1900);
+                        }
+                        
+                        fileName = fileQuery.getName();
+                        lastModified = sdf.format(fileQuery.lastModified());
+                        outToClient.writeBytes(" File Name: " + fileName +  " | File Owner: " + fileOwner + " | Created Date: " + createdDate + " | Last Modified: " + lastModified + " | File Size: " + fileSize + '\n');
+                    }
+                }   outToClient.writeBytes("\0" + '\n');
                 break;
+                
             default:
                 outToClient.writeBytes("-Incompatible type requested, supported types are { F | V }" + '\n');
                 outToClient.writeBytes("\0" + '\n');
                 break;
+                
         }
     }
        
