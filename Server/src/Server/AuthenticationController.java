@@ -207,6 +207,79 @@ public class AuthenticationController {
         return returnStatement;
         
     }
+   
+   public boolean checkAcct(String Acct){
+        // reference: https://www.geeksforgeeks.org/different-ways-reading-text-file-java/
+        boolean found = false;
+        try {
+
+            System.out.println("readfile");
+
+            try {
+                reader = new BufferedReader(new FileReader(file));
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                System.out.println(line);
+                String[] lineDets = line.split(" ", -1);
+                if(user.equals(lineDets[0])){
+                    if(Acct.equals(lineDets[1])){
+                        found = true;
+                    }
+                }
+                //outToClient.writeBytes(line + '\n');
+            }
+
+        } catch (FileNotFoundException e) {
+
+            Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, e);
+
+        } catch (IOException e) {
+
+            Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, e);
+
+        } 
+       return found;
+   }
+   
+    public boolean checkPass(String Pass){
+   // reference: https://www.geeksforgeeks.org/different-ways-reading-text-file-java/
+        boolean found = false;
+        try {
+
+            System.out.println("readfile");
+
+            try {
+                reader = new BufferedReader(new FileReader(file));
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                System.out.println(line);
+                String[] lineDets = line.split(" ", -1);
+                if(user.equals(lineDets[0])){
+                    if(Pass.equals(lineDets[2])){
+                        found = true;
+                    }
+                }
+                //outToClient.writeBytes(line + '\n');
+            }
+
+        } catch (FileNotFoundException e) {
+
+            Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, e);
+
+        } catch (IOException e) {
+
+            Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, e);
+
+        } 
+       return found;
+   }
+
 
     private void connectToDatabase() {
         

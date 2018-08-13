@@ -9,8 +9,8 @@ Transfer Protocol: RFC 913 (https://tools.ietf.org/html/rfc913)
 | ACCT   | Y     | Y    |
 | PASS   | Y     | Y    |
 | TYPE   | Y     | Y    |
-| LIST   | Y     | -    |
-| CDIR   | -     | -    |
+| LIST   | Y     | Y    |
+| CDIR   | Y     | Y    |
 | KILL   | -     | -    |
 | NAME   | -     | -    |
 | DONE   | Y     | Y    |

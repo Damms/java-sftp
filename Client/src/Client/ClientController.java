@@ -64,6 +64,9 @@ public class ClientController {
                 case "LIST":
                     LIST(userCommand);
                     break;
+                case "CDIR":
+                    CDIR(userCommand);
+                    break;
                 default:
                     System.out.println("-INVALID COMMAND");
                     break;
@@ -147,6 +150,39 @@ public class ClientController {
             serverResponse = inFromServer.readLine(); 
         }
 
+    }
+
+    private void CDIR(String command) throws IOException {
+
+        outToServer.writeBytes(command + '\n'); 
+        String serverResponse = inFromServer.readLine(); 
+        System.out.println("FROM SERVER: " + serverResponse);
+        
+        if("+directory ok, send account/password".equals(serverResponse)){     
+            while(!(serverResponse.contains("!Changed working dir to"))){
+                
+                String userCommand = inFromUser.readLine();
+                String[] userCommands = userCommand.split(" ");
+
+                if(null != userCommands[0])switch (userCommands[0]) {
+                    case "ACCT":
+                        outToServer.writeBytes(userCommand + '\n');
+                        serverResponse = inFromServer.readLine(); 
+                        System.out.println("FROM SERVER: " + serverResponse); 
+                        break;
+                    case "PASS":
+                        outToServer.writeBytes(userCommand + '\n');
+                        serverResponse = inFromServer.readLine(); 
+                        System.out.println("FROM SERVER: " + serverResponse); 
+                        break;
+                    default:
+                        System.out.println("-send account/password");
+                        break;
+                }  
+            }      
+        }
+        
+        
     }
     
 }

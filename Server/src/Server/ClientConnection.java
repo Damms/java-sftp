@@ -38,6 +38,7 @@ public class ClientConnection extends Thread {
     String capitalizedSentence; 
     String TYPE_TEXT;
     String storageRoot = "./storage/";
+    String currentDir = "./storage/";
     //String txtContent;
     Socket connectionSocket;
     File file;
@@ -135,6 +136,19 @@ public class ClientConnection extends Thread {
                             outToClient.writeBytes("\0" + '\n');
                         }
                         break;
+                        
+                    case "CDIR":
+                        if(authenticationController.authenticated){
+                            if(clientCommands.length == 1 || clientCommands.length == 2){
+                                CDIR(clientCommands);
+                            } else {
+                                outToClient.writeBytes("-Can't connect to drectory because: COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length) + '\n');
+                            }
+                        } else {
+                            outToClient.writeBytes("-Please log in: " + '\n');
+                        }
+                        
+                        break;
 
                     case "DONE":
                         DONE();
@@ -212,7 +226,7 @@ public class ClientConnection extends Thread {
         
         String requestedDir;
         if(clientCommands.length == 2){ // no requested directory
-            requestedDir = storageRoot + ""; // change to equal current directory when cdir implemented
+            requestedDir = currentDir; // change to equal current directory when cdir implemented
         } else {
             requestedDir = storageRoot + clientCommands[2];
         }
@@ -317,6 +331,84 @@ public class ClientConnection extends Thread {
                 outToClient.writeBytes("-Incompatible type requested, supported types are { F | V }" + '\n');
                 outToClient.writeBytes("\0" + '\n');
                 break;
+                
+        }
+    }
+
+    private void CDIR(String[] clientCommands) throws IOException {
+        
+        String requestedDir;
+        if(clientCommands.length == 1){
+            requestedDir = (storageRoot);
+        } else {
+            requestedDir = (storageRoot + clientCommands[1]);
+        }
+        File testFile = new File(requestedDir);
+        
+        if (!testFile.isDirectory()){
+            
+             outToClient.writeBytes( "-Can't connect to directory because: " + requestedDir + " is not a directory." + '\n');
+             
+        } else {
+            
+            outToClient.writeBytes( "+directory ok, send account/password" + '\n');
+            boolean tempAuth = false;
+            boolean tempAcctFound = false;
+            boolean tempPassFound = false;
+            
+            while(!tempAuth){
+                try { 
+                    clientSentence = inFromClient.readLine();
+                } catch (IOException ex) {
+                    Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+                System.out.println("GOT INPUT: " + clientSentence);
+
+                String[] clientCommands2 = clientSentence.split(" ");
+                String authenticationRespone;
+                if(null == clientCommands2[0]){
+                    System.out.println("-INVALID COMMAND");
+                }
+                else switch (clientCommands2[0]) {
+
+                    case "ACCT":
+                        if(clientCommands2.length == 2){
+                            tempAcctFound = authenticationController.checkAcct(clientCommands2[1]);
+                            if(tempAcctFound && tempPassFound){
+                                tempAuth = true;
+                            } else if(tempAcctFound){
+                                outToClient.writeBytes("+account ok, send password" + '\n');
+                            } else {
+                                outToClient.writeBytes("-invalid account" + '\n');
+                            }
+                        } else {
+                            outToClient.writeBytes("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands2.length) + '\n');
+                        }
+                        break;
+
+                    case "PASS":
+                        if(clientCommands2.length == 2){
+                            tempPassFound = authenticationController.checkPass(clientCommands2[1]);
+                            if(tempAcctFound && tempPassFound){
+                                tempAuth = true;
+                            } else if(tempPassFound){
+                                outToClient.writeBytes("+password ok, send account" + '\n');
+                            } else {
+                                outToClient.writeBytes("-invalid password" + '\n');
+                            }
+                        } else {
+                            outToClient.writeBytes("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands2.length) + '\n');
+                        }
+                        break;
+
+                    default:
+                        outToClient.writeBytes("-INVALID COMMAND");
+                        break;
+                }
+            }
+            currentDir = requestedDir;
+            outToClient.writeBytes("!Changed working dir to" + currentDir + '\n');
                 
         }
     }
