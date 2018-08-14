@@ -49,12 +49,8 @@ public class ClientConnection extends Thread {
         this.connectionSocket = socket;
         this.connected = true;
         createConnections();
-        try {
-            outToClient.writeBytes("+MIT-localhost SFTP Service\n");
-            //-MIT-localhost Out to Lunch
-        } catch (IOException ex) {
-            Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        sendMessage("+MIT-localhost SFTP Service");
+        //-MIT-localhost Out to Lunch
         this.authenticationController = new AuthenticationController();
     }
     
@@ -70,7 +66,7 @@ public class ClientConnection extends Thread {
                 // original
                 System.out.println("WAITING FOR INPUT");
                 try { 
-                    clientSentence = inFromClient.readLine();
+                    clientSentence = receiveMessage();
                 } catch (IOException ex) {
                     Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -87,27 +83,27 @@ public class ClientConnection extends Thread {
                     case "USER":
                         if(clientCommands.length == 2){
                             authenticationRespone = authenticationController.USER(clientCommands);
-                            outToClient.writeBytes(authenticationRespone + '\n');
+                            sendMessage(authenticationRespone);
                         } else {
-                            outToClient.writeBytes("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length) + '\n');
+                            sendMessage("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length));
                         }
                         break;
 
                     case "ACCT":
                         if(clientCommands.length == 2){
                             authenticationRespone = authenticationController.ACCT(clientCommands);
-                            outToClient.writeBytes(authenticationRespone + '\n');
+                            sendMessage(authenticationRespone);
                         } else {
-                            outToClient.writeBytes("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length) + '\n');
+                            sendMessage("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length));
                         }
                         break;
 
                     case "PASS":
                         if(clientCommands.length == 2){
                             authenticationRespone = authenticationController.PASS(clientCommands);
-                            outToClient.writeBytes(authenticationRespone + '\n');
+                            sendMessage(authenticationRespone);
                         } else {
-                            outToClient.writeBytes("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length) + '\n');
+                            sendMessage("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length));
                         }
                         break;
 
@@ -116,10 +112,10 @@ public class ClientConnection extends Thread {
                             if(clientCommands.length == 2){
                                 TYPE(clientCommands);
                             } else {
-                                outToClient.writeBytes("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length) + '\n');
+                                sendMessage("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length));
                             }
                         } else {
-                            outToClient.writeBytes("-Please log in: " + '\n');
+                            sendMessage("-Please log in: ");
                         }
                         break;
                         
@@ -128,12 +124,10 @@ public class ClientConnection extends Thread {
                             if(authenticationController.authenticated){
                                 LIST(clientCommands);
                             } else {
-                                outToClient.writeBytes("-Please log in: " + '\n');
-                                outToClient.writeBytes("\0" + '\n');
+                                sendMessage("-Please log in: ");
                             }
                         } else {
-                            outToClient.writeBytes("-COMMAND EXPECTED AT LEAST 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length) + '\n');
-                            outToClient.writeBytes("\0" + '\n');
+                            sendMessage("-COMMAND EXPECTED AT LEAST 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length));
                         }
                         break;
                         
@@ -142,10 +136,10 @@ public class ClientConnection extends Thread {
                             if(clientCommands.length == 1 || clientCommands.length == 2){
                                 CDIR(clientCommands);
                             } else {
-                                outToClient.writeBytes("-Can't connect to drectory because: COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length) + '\n');
+                                sendMessage("-Can't connect to drectory because: COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length));
                             }
                         } else {
-                            outToClient.writeBytes("-Please log in: " + '\n');
+                            sendMessage("-Please log in: ");
                         }
                         
                         break;
@@ -155,10 +149,10 @@ public class ClientConnection extends Thread {
                             if(clientCommands.length == 2){
                                 KILL(clientCommands);
                             } else {
-                                outToClient.writeBytes("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length) + '\n');
+                                sendMessage("-COMMAND EXPECTED AT LEAST 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length));
                             }
                         } else {
-                            outToClient.writeBytes("-Please log in: " + '\n');
+                            sendMessage("-Please log in: ");
                         }
                         break;
                         
@@ -167,10 +161,10 @@ public class ClientConnection extends Thread {
                             if(clientCommands.length == 2){
                                 NAME(clientCommands);
                             } else {
-                                outToClient.writeBytes("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length) + '\n');
+                                sendMessage("-COMMAND EXPECTED AT LEAST 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length));
                             }
                         } else {
-                            outToClient.writeBytes("-Please log in: " + '\n');
+                            sendMessage("-Please log in: ");
                         }
                         break;
 
@@ -178,7 +172,7 @@ public class ClientConnection extends Thread {
                         DONE();
 
                     default:
-                        System.out.println("-INVALID COMMAND");
+                        sendMessage("-INVALID COMMAND");
                         break;
 
                 }
@@ -215,26 +209,59 @@ public class ClientConnection extends Thread {
             System.out.println("Databse file not found.");
         }
         
+    }    
+    
+    private String receiveMessage() throws IOException {
+        String sentence = "";
+        int character = 0;
+
+        while (true){
+            
+            character = inFromClient.read();  // Read one character
+
+            if (character == 0) { // null
+                break;
+            }
+
+            sentence = sentence.concat(Character.toString((char)character));
+        }
+
+        return sentence;
     }
+    
+    private void sendMessage(String message){
+        
+        try { 
+            outToClient.writeBytes(message + '\0');
+        } catch (IOException ex) {
+            try {
+                connectionSocket.close();
+            } catch (IOException ex1) {
+                Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex1);
+            }
+        }
+        
+    }
+    
     
     private void TYPE(String[] clientCommands) throws IOException{
         if(null == clientCommands[1]) {
-            outToClient.writeBytes("-Type not valid" + '\n');
+            sendMessage("-Type not valid");
         } else switch (clientCommands[1]) {
             case "A":
                 TYPE_TEXT = "Ascii";
-                outToClient.writeBytes("+Using " + TYPE_TEXT + " mode" + '\n');
+                sendMessage("+Using " + TYPE_TEXT + " mode");
                 break;
             case "B":
                 TYPE_TEXT = "Binary";
-                outToClient.writeBytes("+Using " + TYPE_TEXT + " mode" + '\n');
+                sendMessage("+Using " + TYPE_TEXT + " mode");
                 break;
             case "C":
                 TYPE_TEXT = "Continuous";
-                outToClient.writeBytes("+Using " + TYPE_TEXT + " mode" + '\n');
+                sendMessage("+Using " + TYPE_TEXT + " mode");
                 break;
             default:
-                outToClient.writeBytes("-Type not valid" + '\n');
+                sendMessage("-Type not valid");
                 break;
         }
         
@@ -243,7 +270,7 @@ public class ClientConnection extends Thread {
     private void DONE() throws IOException {
         authenticationController.reset();
         connected = false;
-        outToClient.writeBytes("+Connection closed" + '\n');
+        sendMessage("+Connection closed");
     }
     
     private void LIST(String[] clientCommands) throws IOException{
@@ -256,27 +283,32 @@ public class ClientConnection extends Thread {
         }
         
         if(null == clientCommands[1]){
-            outToClient.writeBytes("-Incompatible type requested, supported types are { F | V }" + '\n');
-            outToClient.writeBytes("\0" + '\n');
+            sendMessage("-Incompatible type requested, supported types are { F | V }");
         }
         
         else switch (clientCommands[1]) {
             
             case "F":
-                outToClient.writeBytes("+" + requestedDir + '\n');
+               
                 System.out.println("F List");
                 File dir = new File(requestedDir);
-                File[] filesList = dir.listFiles();
+                File[] filesList = dir.listFiles(); 
+                String fileListString = ("+" + requestedDir + '\n');
+                
                 for (File fileQuery : filesList) {
+                    
                     if (fileQuery.isFile()) {
-                        outToClient.writeBytes(fileQuery.getName() + '\n');
                         System.out.println(fileQuery.getName());
+                        fileListString = fileListString.concat(fileQuery.getName() + '\n');
                     }
-                }   outToClient.writeBytes("\0" + '\n');
+                }   
+                
+                sendMessage(fileListString);
+                
                 break;
                 
             case "V":
-                outToClient.writeBytes("+" + requestedDir + '\n');
+                
                 SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
                 DecimalFormat df = new DecimalFormat("#.##"); 
                 String fileName;
@@ -287,6 +319,7 @@ public class ClientConnection extends Thread {
                 System.out.println("V List");
                 File dir2 = new File(requestedDir);
                 File[] filesList2 = dir2.listFiles();
+                String fileListString2 = ("+" + requestedDir + '\n');
                 
                 for (File fileQuery : filesList2) {
                     if (fileQuery.isFile()) {
@@ -339,21 +372,26 @@ public class ClientConnection extends Thread {
                                     new Date(attributes.creationTime().to(TimeUnit.MILLISECONDS));
 
                             createdDate = 
-                                    creationDate.getDate() + "/" +
                                     (creationDate.getMonth() + 1) + "/" +
+                                    creationDate.getDate() + "/" +
                                     (creationDate.getYear() + 1900);
                         }
                         
                         fileName = fileQuery.getName();
                         lastModified = sdf.format(fileQuery.lastModified());
-                        outToClient.writeBytes(" File Name: " + fileName +  " | File Owner: " + fileOwner + " | Created Date: " + createdDate + " | Last Modified: " + lastModified + " | File Size: " + fileSize + '\n');
+                        String detailedFile = " File Name: " + fileName +  " | File Owner: " + fileOwner + " | Date Created: " + createdDate + " | Last Modified: " + lastModified + " | File Size: " + fileSize + '\n';
+                        fileListString2 = fileListString2.concat(detailedFile);
                     }
-                }   outToClient.writeBytes("\0" + '\n');
+                    
+                }   
+                
+                sendMessage(fileListString2);
+                
                 break;
                 
             default:
-                outToClient.writeBytes("-Incompatible type requested, supported types are { F | V }" + '\n');
-                outToClient.writeBytes("\0" + '\n');
+                
+                sendMessage("-Incompatible type requested, supported types are { F | V }");
                 break;
                 
         }
@@ -371,18 +409,19 @@ public class ClientConnection extends Thread {
         
         if (!testFile.isDirectory()){
             
-             outToClient.writeBytes( "-Can't connect to directory because: " + requestedDir + " is not a directory." + '\n');
+            sendMessage("-Can't connect to directory because: " + requestedDir + " is not a directory.");
              
         } else {
             
-            outToClient.writeBytes( "+directory ok, send account/password" + '\n');
+            sendMessage( "+directory ok, send account/password");
             boolean tempAuth = false;
             boolean tempAcctFound = false;
             boolean tempPassFound = false;
             
             while(!tempAuth){
+                
                 try { 
-                    clientSentence = inFromClient.readLine();
+                    clientSentence = receiveMessage();
                 } catch (IOException ex) {
                     Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -391,48 +430,58 @@ public class ClientConnection extends Thread {
 
                 String[] clientCommands2 = clientSentence.split(" ");
                 String authenticationRespone;
+                
                 if(null == clientCommands2[0]){
                     System.out.println("-INVALID COMMAND");
                 }
                 else switch (clientCommands2[0]) {
 
                     case "ACCT":
+                        
                         if(clientCommands2.length == 2){
                             tempAcctFound = authenticationController.checkAcct(clientCommands2[1]);
+                            
                             if(tempAcctFound && tempPassFound){
                                 tempAuth = true;
                             } else if(tempAcctFound){
-                                outToClient.writeBytes("+account ok, send password" + '\n');
+                                sendMessage("+account ok, send password");
                             } else {
-                                outToClient.writeBytes("-invalid account" + '\n');
+                                sendMessage("-invalid account");
                             }
-                        } else {
-                            outToClient.writeBytes("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands2.length) + '\n');
+                            
+                        } 
+                        else {
+                            sendMessage("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands2.length));
                         }
+                        
                         break;
 
                     case "PASS":
+                        
                         if(clientCommands2.length == 2){
                             tempPassFound = authenticationController.checkPass(clientCommands2[1]);
+                            
                             if(tempAcctFound && tempPassFound){
                                 tempAuth = true;
                             } else if(tempPassFound){
-                                outToClient.writeBytes("+password ok, send account" + '\n');
+                                sendMessage("+password ok, send account");
                             } else {
-                                outToClient.writeBytes("-invalid password" + '\n');
+                                sendMessage("-invalid password");
                             }
-                        } else {
-                            outToClient.writeBytes("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands2.length) + '\n');
+                            
+                        } 
+                        else {
+                            sendMessage("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands2.length));
                         }
                         break;
 
                     default:
-                        outToClient.writeBytes("-INVALID COMMAND");
+                        sendMessage("-INVALID COMMAND");
                         break;
                 }
             }
             currentDir = requestedDir;
-            outToClient.writeBytes("!Changed working dir to" + currentDir + '\n');
+            sendMessage("!Changed working dir to" + currentDir);
                 
         }
     }
@@ -442,11 +491,12 @@ public class ClientConnection extends Thread {
         // Reference: https://www.geeksforgeeks.org/delete-file-using-java/
         File testFile = new File(currentDir + clientCommands[1]);
         String fileName = testFile.getName();
+        
         if(testFile.delete()){
-            outToClient.writeBytes("+" + fileName + " deleted" + '\n');
+            sendMessage("+" + fileName + " deleted");
         }
         else{
-            outToClient.writeBytes("-Not deleted because" + '\n');
+            sendMessage("-Not deleted because");
         }
         
     }
@@ -458,17 +508,19 @@ public class ClientConnection extends Thread {
         
         if(testFile.exists()){
             
-            outToClient.writeBytes("+File exists" + '\n');
+            sendMessage("+File exists");
             System.out.println("+File exists" + '\n');
       
-            clientSentence = inFromClient.readLine();
+            clientSentence = receiveMessage();
             String[] clientCommands2 = clientSentence.split(" ");     
             boolean cont = false;
+            
             if("TOBE".equals(clientCommands2[0]) && clientCommands.length == 2){
                 cont = true;
             }
+            
             while(!cont){
-                clientSentence = inFromClient.readLine();
+                clientSentence = receiveMessage();
                 clientCommands2 = clientSentence.split(" ");
                 if("TOBE".equals(clientCommands2[0]) && clientCommands.length == 2){
                     cont = true;
@@ -479,26 +531,28 @@ public class ClientConnection extends Thread {
             File file2 = new File(currentDir + clientCommands2[1]);
 
             if (file2.exists()){
-               outToClient.writeBytes("-File wasn't renamed because file with specified name already exists." + '\n');
-               System.out.println("-File wasn't renamed because file with specified name already exists." + '\n');
-            } else {
+               sendMessage("-File wasn't renamed because file with specified name already exists.");
+               System.out.println("-File wasn't renamed because file with specified name already exists.");
+            } 
+            else {
                 // Rename file (or directory)
                 boolean success = testFile.renameTo(file2);
 
                 if (!success) {
                    // File was not successfully renamed
-                   outToClient.writeBytes("-File wasn't renamed because " + '\n');
-                   System.out.println("-File wasn't renamed because " + '\n');
+                   sendMessage("-File wasn't renamed because ");
+                   System.out.println("-File wasn't renamed because ");
                 } else {
-                    outToClient.writeBytes("+" + oldFileName + " renamed to " + file2.getName() + '\n');
-                   System.out.println("+" + oldFileName + " renamed to " + file2.getName() + '\n');
+                   sendMessage("+" + oldFileName + " renamed to " + file2.getName());
+                   System.out.println("+" + oldFileName + " renamed to " + file2.getName());
                 }
+                
             }
  
         }
         else{
-            outToClient.writeBytes("-Can't find " + clientCommands[1] + '\n');
-            System.out.println("-Can't find " + clientCommands[1] + '\n');
+            sendMessage("-Can't find " + clientCommands[1]);
+            System.out.println("-Can't find " + clientCommands[1]);
         }
         
     }

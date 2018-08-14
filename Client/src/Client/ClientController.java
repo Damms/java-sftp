@@ -30,7 +30,7 @@ public class ClientController {
         createConnections();
         String userCommand;
         
-        String serverResponse = inFromServer.readLine();
+        String serverResponse = receiveMessage();
         System.out.println("Response from server: " + serverResponse);
         if(serverResponse.contains("+MIT")){
             connected = true;
@@ -106,42 +106,64 @@ public class ClientController {
         
     }
     
+    private String receiveMessage() throws IOException {
+        String sentence = "";
+        int character = 0;
+
+        while (true){
+            
+            character = inFromServer.read();  // Read one character
+
+            if (character == 0) { // null
+                break;
+            }
+
+            sentence = sentence.concat(Character.toString((char)character));
+        }
+
+        return sentence;
+    }
+    
+    private void sendMessage(String message) throws IOException{
+        outToServer.writeBytes(message + '\0'); 
+    }
+    
     private void USER(String command) throws IOException {
         
-        outToServer.writeBytes(command + '\n'); 
-        String serverResponse = inFromServer.readLine(); 
+        sendMessage(command); 
+        String serverResponse = receiveMessage(); 
         System.out.println("FROM SERVER: " + serverResponse); 
 
     }
     
     private void ACCT(String command) throws IOException {
 
-        outToServer.writeBytes(command + '\n'); 
-        String serverResponse = inFromServer.readLine(); 
+        sendMessage(command); 
+        String serverResponse = receiveMessage(); 
         System.out.println("FROM SERVER: " + serverResponse); 
 
     }
     
     private void PASS(String command) throws IOException {
 
-        outToServer.writeBytes(command + '\n'); 
-        String serverResponse = inFromServer.readLine(); 
+        sendMessage(command); 
+        String serverResponse = receiveMessage(); 
         System.out.println("FROM SERVER: " + serverResponse); 
 
     }
     
     private void TYPE(String command) throws IOException {
 
-        outToServer.writeBytes(command + '\n'); 
-        String serverResponse = inFromServer.readLine(); 
+        sendMessage(command); 
+        String serverResponse = receiveMessage(); 
         System.out.println("FROM SERVER: " + serverResponse); 
 
     }
     
     private void DONE(String command) throws IOException {
 
-        outToServer.writeBytes(command + '\n'); 
-        String serverResponse = inFromServer.readLine(); 
+        sendMessage(command); 
+        String serverResponse = receiveMessage(); 
         System.out.println("FROM SERVER: " + serverResponse); 
         clientSocket.close();
         connected = false;
@@ -149,27 +171,28 @@ public class ClientController {
     
     private void LIST(String command) throws IOException {
 
-        outToServer.writeBytes(command + '\n'); 
-        String serverResponse = inFromServer.readLine(); 
+        sendMessage(command); 
+        /*String serverResponse = inFromServer.readLine(); 
         while(!serverResponse.contains("\0")){
             System.out.println("FROM SERVER: " + serverResponse); 
             serverResponse = inFromServer.readLine(); 
-        }
-
+        }*/
+        String serverResponse = receiveMessage();
+        System.out.println("FROM SERVER: " + serverResponse);
     }
     
     private void KILL(String command) throws IOException {
         
-        outToServer.writeBytes(command + '\n'); 
-        String serverResponse = inFromServer.readLine(); 
+        sendMessage(command); 
+        String serverResponse = receiveMessage(); 
         System.out.println("FROM SERVER: " + serverResponse); 
 
     }
 
     private void CDIR(String command) throws IOException {
 
-        outToServer.writeBytes(command + '\n'); 
-        String serverResponse = inFromServer.readLine(); 
+        sendMessage(command); 
+        String serverResponse = receiveMessage(); 
         System.out.println("FROM SERVER: " + serverResponse);
         
         if("+directory ok, send account/password".equals(serverResponse)){     
@@ -180,13 +203,13 @@ public class ClientController {
 
                 if(null != userCommands[0])switch (userCommands[0]) {
                     case "ACCT":
-                        outToServer.writeBytes(userCommand + '\n');
-                        serverResponse = inFromServer.readLine(); 
+                        sendMessage(userCommand);
+                        serverResponse = receiveMessage(); 
                         System.out.println("FROM SERVER: " + serverResponse); 
                         break;
                     case "PASS":
-                        outToServer.writeBytes(userCommand + '\n');
-                        serverResponse = inFromServer.readLine(); 
+                        sendMessage(userCommand);
+                        serverResponse = receiveMessage(); 
                         System.out.println("FROM SERVER: " + serverResponse); 
                         break;
                     default:
@@ -201,35 +224,28 @@ public class ClientController {
 
     private void NAME(String userCommand) throws IOException {
 
-        outToServer.writeBytes(userCommand + '\n'); 
-        String serverResponse = inFromServer.readLine(); 
+        sendMessage(userCommand);
+        String serverResponse = receiveMessage(); 
         System.out.println("FROM SERVER: " + serverResponse);
         
         if("+File exists".equals(serverResponse)){
             
-            System.out.println("Send command TOBE followed by the new file name");
+            String userCommand2;
+            String[] userCommands;
             
-            String userCommand2 = inFromUser.readLine();
-            String[] userCommands = userCommand2.split(" ");
-            
-            boolean cont = false;
-            if("TOBE".equals(userCommands[0]) && userCommands.length == 2){
-                cont = true;
-            }
-            
-            while(!cont){
+            while(true){
                 
                 System.out.println("-Send command TOBE followed by the new file name");
                 userCommand2 = inFromUser.readLine();
                 userCommands = userCommand2.split(" ");
                 if("TOBE".equals(userCommands[0]) && userCommands.length == 2){
-                    cont = true;
+                    break;
                 }
                 
             }
             
-            outToServer.writeBytes(userCommand2 + '\n'); 
-            serverResponse = inFromServer.readLine(); 
+            sendMessage(userCommand2);
+            serverResponse = receiveMessage(); 
             System.out.println("FROM SERVER: " + serverResponse);
             
         }
