@@ -26,6 +26,7 @@ public class AuthenticationController {
     boolean userVerified = false;
     boolean userAcct = false;
     boolean userPass = false;
+    boolean superID = false;
     String user = "";
     String acct = "";
     String pass = "";
@@ -35,9 +36,11 @@ public class AuthenticationController {
     }
     
     public String USER(String[] clientCommands) throws IOException {
-        boolean userFound = false;
+        
         String returnStatement = "";
                
+        // reset authentication and re sign in if it is authenticated
+        
         // reference: https://www.geeksforgeeks.org/different-ways-reading-text-file-java/
         try {
 
@@ -53,8 +56,20 @@ public class AuthenticationController {
                 System.out.println(line);
                 String[] lineDets = line.split(" ", -1);
                 if(clientCommands[1].equals(lineDets[0])){
-                    userFound = true;
+                    userVerified = true;
                     user = lineDets[0];
+                    acct = lineDets[1];
+                    pass = lineDets[2];
+                    if("-".equals(acct)){
+                        userAcct = true;
+                    }
+                    if("-".equals(pass)){
+                        userPass = true;
+                    }
+                    if(userVerified && userAcct && userPass){
+                        authenticated = true;
+                        superID = true;
+                    }
                     // check if need user name and pass to log in 
                     // authenticated = true;
                 }
@@ -63,7 +78,7 @@ public class AuthenticationController {
 
             if(authenticated){
                 returnStatement = "!<user-id> logged in";
-            } else if (userFound){
+            } else if (userVerified){
                 userVerified = true;
                 returnStatement = "+User-id valid, send account and password";
             } else {
@@ -88,196 +103,70 @@ public class AuthenticationController {
     
     public String ACCT (String[] clientCommands) throws IOException{
         
-        boolean acctFound = false;
-        String returnStatement = null;
+        String returnStatement;
         
-        if(authenticated){
+        if(authenticated){ 
             //outToClient.writeBytes("!<user-id> logged in" + '\n');
             returnStatement = "!<user-id> logged in";
         } 
-        else {
+        else if (userVerified) {
         
-            // reference: https://www.geeksforgeeks.org/different-ways-reading-text-file-java/
-            try {
-
-                System.out.println("readfile");
-
-                try {
-                    reader = new BufferedReader(new FileReader(file));
-                } catch (FileNotFoundException ex) {
-                    Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
-                }
-
-                for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                    System.out.println(line);
-                    String[] lineDets = line.split(" ", -1);
-                    if(user.equals(lineDets[0])){
-                        if(clientCommands[1].equals(lineDets[1])){
-                            acctFound = true;
-                        }
-                    }
-                    //outToClient.writeBytes(line + '\n');
-                }
-
-                if(acctFound){
-                    userAcct = true;
-                    if(userPass){
-                        authenticated = true;
-                        returnStatement = "! Account valid, logged-in";
-                    } else {
-                        returnStatement = "+Account valid, send password";
-                    }
+            if(clientCommands[1].equals(acct)){
+                userAcct = true;
+                if(userPass){
+                    authenticated = true;
+                    returnStatement = "! Account valid, logged-in";
                 } else {
-                    returnStatement = "-Invalid account, try again";
+                    returnStatement = "+Account valid, send password";
                 }
-
-
-            } catch (FileNotFoundException e) {
-
-                Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, e);
-
-            } catch (IOException e) {
-
-                Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, e);
-
-            } 
-            
+            } else {
+                returnStatement = "-Invalid account, try again";
+            }
+        } else {
+            returnStatement = "-Please identify your user-id";
         }
-        
         return returnStatement;
         
     }
     
    public String PASS (String[] clientCommands) throws IOException{
         
-        boolean passFound = false;
-        String returnStatement = null;
+        String returnStatement;
         
-        if(authenticated){
+        if(authenticated){ 
             //outToClient.writeBytes("!<user-id> logged in" + '\n');
             returnStatement = "!<user-id> logged in";
-        } else {
+        } 
+        else if(userVerified) {
         
-            // reference: https://www.geeksforgeeks.org/different-ways-reading-text-file-java/
-            try {
-
-                System.out.println("readfile");
-
-                try {
-                    reader = new BufferedReader(new FileReader(file));
-                } catch (FileNotFoundException ex) {
-                    Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
-                }
-
-                for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                    System.out.println(line);
-                    String[] lineDets = line.split(" ", -1);
-                    if(user.equals(lineDets[0])){
-                        if(clientCommands[1].equals(lineDets[2])){
-                            passFound = true;
-                        }
-                    }
-                    //outToClient.writeBytes(line + '\n');
-                }
-
-                if(passFound){
-                    userPass = true;
-                    if(userAcct){
-                        authenticated = true;
-                        returnStatement = "! Logged in";
-                    } else {
-                        returnStatement = "+Send account";
-                    }
+            if(clientCommands[1].equals(pass)){
+                userPass = true;
+                if(userPass){
+                    authenticated = true;
+                    returnStatement = "! Logged in";
                 } else {
-                    returnStatement = "-Wrong password, try again";
+                    returnStatement = "+Send account";
                 }
-
-            } catch (FileNotFoundException e) {
-
-                Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, e);
-
-            } catch (IOException e) {
-
-                Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, e);
-
-            } 
-            
+            } else {
+                returnStatement = "-Wrong password, try again";
+            }
+        } else {
+            returnStatement = "-Please identify your user-id";
         }
-        
         return returnStatement;
         
     }
    
    public boolean checkAcct(String Acct){
-        // reference: https://www.geeksforgeeks.org/different-ways-reading-text-file-java/
-        boolean found = false;
-        try {
-
-            System.out.println("readfile");
-
-            try {
-                reader = new BufferedReader(new FileReader(file));
-            } catch (FileNotFoundException ex) {
-                Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
-            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                System.out.println(line);
-                String[] lineDets = line.split(" ", -1);
-                if(user.equals(lineDets[0])){
-                    if(Acct.equals(lineDets[1])){
-                        found = true;
-                    }
-                }
-                //outToClient.writeBytes(line + '\n');
-            }
-
-        } catch (FileNotFoundException e) {
-
-            Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, e);
-
-        } catch (IOException e) {
-
-            Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, e);
-
-        } 
-       return found;
+       
+        return Acct.equals(acct);
+       
    }
    
     public boolean checkPass(String Pass){
-   // reference: https://www.geeksforgeeks.org/different-ways-reading-text-file-java/
-        boolean found = false;
-        try {
-
-            System.out.println("readfile");
-
-            try {
-                reader = new BufferedReader(new FileReader(file));
-            } catch (FileNotFoundException ex) {
-                Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
-            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                System.out.println(line);
-                String[] lineDets = line.split(" ", -1);
-                if(user.equals(lineDets[0])){
-                    if(Pass.equals(lineDets[2])){
-                        found = true;
-                    }
-                }
-                //outToClient.writeBytes(line + '\n');
-            }
-
-        } catch (FileNotFoundException e) {
-
-            Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, e);
-
-        } catch (IOException e) {
-
-            Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, e);
-
-        } 
-       return found;
+        
+       return Pass.equals(pass);
+        
    }
 
 

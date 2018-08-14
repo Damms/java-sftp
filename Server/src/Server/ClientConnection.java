@@ -413,8 +413,14 @@ public class ClientConnection extends Thread {
              
         } else {
             
-            sendMessage( "+directory ok, send account/password");
-            boolean tempAuth = false;
+            boolean tempAuth;
+            if(authenticationController.superID){
+                tempAuth = true;
+                
+            } else {
+                sendMessage( "+directory ok, send account/password");
+                tempAuth = false;
+            }
             boolean tempAcctFound = false;
             boolean tempPassFound = false;
             
