@@ -39,8 +39,6 @@ public class AuthenticationController {
         
         String returnStatement = "";
                
-        // reset authentication and re sign in if it is authenticated
-        
         // reference: https://www.geeksforgeeks.org/different-ways-reading-text-file-java/
         try {
 
@@ -57,6 +55,9 @@ public class AuthenticationController {
                 String[] lineDets = line.split(" ", -1);
                 if(clientCommands[1].equals(lineDets[0])){
                     userVerified = true;
+                    authenticated = false;
+                    userAcct = false;
+                    userPass = false;
                     user = lineDets[0];
                     acct = lineDets[1];
                     pass = lineDets[2];
