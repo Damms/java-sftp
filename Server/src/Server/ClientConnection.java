@@ -23,6 +23,12 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
+import java.io.*;
+import java.net.Socket;
+import java.nio.file.*;
+import java.nio.file.attribute.*;
+import java.text.DateFormat;
+import java.util.*;
 
 /**
  *
@@ -497,13 +503,19 @@ public class ClientConnection extends Thread {
         // Reference: https://www.geeksforgeeks.org/delete-file-using-java/
         File testFile = new File(currentDir + clientCommands[1]);
         String fileName = testFile.getName();
+        Path path = testFile.toPath();
         
-        if(testFile.delete()){
+        try {
+            Files.delete(path);
             sendMessage("+" + fileName + " deleted");
+        } catch(NoSuchFileException err){
+            System.out.println("Error: " + err);
+            sendMessage("-Not deleted because file doesn't exist.");
+        } catch (IOException err){
+            System.out.println("Error: " + err);
+            sendMessage("-Not deleted because file may be protected.");     
         }
-        else{
-            sendMessage("-Not deleted because");
-        }
+
         
     }
     
