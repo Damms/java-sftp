@@ -42,7 +42,7 @@ public class ClientConnection extends Thread {
     DataOutputStream  outToClient = null;
     String clientSentence; 
     String capitalizedSentence; 
-    String TYPE_TEXT;
+    String TYPE_TEXT = "B";
     String storageRoot = "./storage/";
     String currentDir = "./storage/";
     //String txtContent;
@@ -173,6 +173,14 @@ public class ClientConnection extends Thread {
                             sendMessage("-Please log in: ");
                         }
                         break;
+                        
+                    case "RETR":
+                        if(clientCommands.length == 2){
+                            RETR(clientCommands);
+                        } else {
+                            sendMessage("-COMMAND EXPECTED 2 ARGUMENTS, GOT " + Integer.toString(clientCommands.length));
+                        }
+                        break;
 
                     case "DONE":
                         DONE();
@@ -255,15 +263,15 @@ public class ClientConnection extends Thread {
             sendMessage("-Type not valid");
         } else switch (clientCommands[1]) {
             case "A":
-                TYPE_TEXT = "Ascii";
+                TYPE_TEXT = "A";
                 sendMessage("+Using " + TYPE_TEXT + " mode");
                 break;
             case "B":
-                TYPE_TEXT = "Binary";
+                TYPE_TEXT = "B";
                 sendMessage("+Using " + TYPE_TEXT + " mode");
                 break;
             case "C":
-                TYPE_TEXT = "Continuous";
+                TYPE_TEXT = "C";
                 sendMessage("+Using " + TYPE_TEXT + " mode");
                 break;
             default:
@@ -277,6 +285,7 @@ public class ClientConnection extends Thread {
         authenticationController.reset();
         connected = false;
         sendMessage("+Connection closed");
+        connectionSocket.close();
     }
     
     private void LIST(String[] clientCommands) throws IOException{
@@ -334,7 +343,7 @@ public class ClientConnection extends Thread {
                         
                         // File Size
                         int multiplication = 1;
-                        double fileSizeDouble = fileQuery.length();
+                        long fileSizeDouble = fileQuery.length();
                         while(fileSizeDouble > 1024 && multiplication < 4){
                             fileSizeDouble = fileSizeDouble / 1024;
                             multiplication += 1;
@@ -571,6 +580,100 @@ public class ClientConnection extends Thread {
         else{
             sendMessage("-Can't find " + clientCommands[1]);
             System.out.println("-Can't find " + clientCommands[1]);
+        }
+        
+    }
+
+    private void RETR(String[] clientCommands) throws IOException {
+        
+        File requestedFile = new File(currentDir + clientCommands[1]);
+        
+        if (!requestedFile.exists()){
+            sendMessage("-File doesn't exist");
+        }
+        else if (requestedFile.exists()){
+            
+            long length = requestedFile.length();
+            System.out.println("File size: " + length);
+            sendMessage(Long.toString(length));
+            
+            // Receive response
+            String userCommand2;
+            String [] userCommands;
+            while(true){
+                
+                System.out.println("Type: SEND or STOP");
+                userCommand2 = receiveMessage();
+                userCommands = userCommand2.split(" ");
+                
+                if("SEND".equals(userCommands[0])|| "STOP".equals(userCommands[0])){
+                    break;
+                }
+                
+            }
+            
+            if("SEND".equals(userCommands[0])){
+                sendFileBytes(requestedFile);
+            }
+            else if ("STOP".equals(userCommands[0])){
+                sendMessage("+ok, RETR aborted");
+            }
+            
+        }
+        
+        
+    }
+    
+        
+    // reference: https://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets#comment88270571_9520911
+    // reference: https://stackoverflow.com/questions/38732970/java-sending-and-receiving-file-over-sockets
+    private void sendFileBytes(File requestedFile) throws IOException{
+        
+        if("A".equals(TYPE_TEXT)){
+            
+            byte[] bytes = new byte[(int) requestedFile.length()];
+            try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(requestedFile))) {
+                outToClient.flush();
+                // Read and send by byte
+                int count = 0;
+                while ((count = bis.read(bytes)) >= 0) {
+                    outToClient.write(bytes, 0, count);
+                }
+                outToClient.flush();
+            }
+            
+        }
+        else if("B".equals(TYPE_TEXT) || "C".equals(TYPE_TEXT)){ // Binary, Continuous
+            
+            DataOutputStream fileDataToClient;
+            try ( 
+                FileInputStream fileStream = new FileInputStream(requestedFile)) {
+                fileDataToClient = new DataOutputStream(new BufferedOutputStream(connectionSocket.getOutputStream()));
+                int count;
+                while ((count = fileStream.read()) >= 0) {
+                    fileDataToClient.write(count);
+                }
+                fileDataToClient.flush();
+            }
+            
+        }
+
+    }
+    
+    // reference: https://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets#comment88270571_9520911
+    private void readFileBytes(String outputFileName) throws IOException{
+        
+        byte[] bytes = new byte[16*1024];
+        try (InputStream in = connectionSocket.getInputStream(); OutputStream out = new FileOutputStream(storageRoot + outputFileName)) {
+            
+            int count;
+            while ((count = in.read(bytes)) > 0) {
+                out.write(bytes, 0, count);
+            }
+            
+            out.close();
+            in.close();
+            
         }
         
     }

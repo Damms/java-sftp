@@ -142,7 +142,7 @@ public class AuthenticationController {
         
             if(clientCommands[1].equals(pass)){
                 userPass = true;
-                if(userPass){
+                if(userAcct){
                     authenticated = true;
                     returnStatement = "! Logged in";
                 } else {
@@ -188,6 +188,7 @@ public class AuthenticationController {
         userVerified = false;
         userAcct = false;
         userPass = false;
+        superID = false;
         user = "";
         acct = "";
         pass = "";

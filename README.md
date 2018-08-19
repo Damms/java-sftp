@@ -14,5 +14,5 @@ Transfer Protocol: RFC 913 (https://tools.ietf.org/html/rfc913)
 | KILL   | Y     | Y    |
 | NAME   | Y     | Y    |
 | DONE   | Y     | Y    |
-| RETR   | -     | -    |
+| RETR   | Y     | Y    |
 | STOR   | -     | -    |
