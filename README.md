@@ -35,7 +35,7 @@ Note: This project does support multiple clients
 * The list of users, accounts and passwords are located in Server/database.txt
 * USER ACCT PASS are each seperated by a single space
 * If you wish a USER to not require an ACCT or PASS then replace the relevant field with a hyphon ("-")
-The database has five preloaded accounts 
+* The database has five preloaded accounts 
 
 ```reStructuredText
 USER: USER
@@ -78,80 +78,80 @@ The following commands are supported, it's important to know that each argument 
 
 ### USER
 Description
-##### Working Case
+#### Working Case
 --
-##### Failure Case
+#### Failure Case
 --
 
 ### ACCT
 Description
-##### Working Case
+#### Working Case
 --
-##### Failure Case
+#### Failure Case
 --
 
 ### PASS
 Description
-##### Working Case
+#### Working Case
 --
-##### Failure Case
+#### Failure Case
 --
 
 ### TYPE
 Description
-##### Working Case
+#### Working Case
 --
-##### Failure Case
+#### Failure Case
 --
 
 ### LIST
 Description
-##### Working Case
+#### Working Case
 --
-##### Failure Case
+#### Failure Case
 --
 
 ### CDIR
 Description
-##### Working Case
+#### Working Case
 --
-##### Failure Case
+#### Failure Case
 --
 
 ### KILL
 Description
-##### Working Case
+#### Working Case
 --
-##### Failure Case
+#### Failure Case
 --
 
 ### NAME
 Description
-##### Working Case
+#### Working Case
 --
-##### Failure Case
+#### Failure Case
 --
 
 ### DONE
 Description
-##### Working Case
+#### Working Case
 --
-##### Failure Case
+#### Failure Case
 --
 
 ### RETR
 Description
-##### Working Case
+#### Working Case
 --
-##### Failure Case
+#### Failure Case
 --
 
 ### STOR
 Description
 Note: STOR only supports files with an extension. Meaning a file "example" is not supported, but a file "example.xx" is supported.
-##### Working Case
+#### Working Case
 --
-##### Failure Case
+#### Failure Case
 --
 
 ## Example Use Cases
