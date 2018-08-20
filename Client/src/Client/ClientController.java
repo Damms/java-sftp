@@ -88,6 +88,9 @@ public class ClientController {
                 case "RETR":
                     RETR(userCommand);
                     break;
+                case "STOR":
+                    STOR(userCommand);
+                    break;
                 default:
                     System.out.println("-INVALID COMMAND");
                     break;
@@ -302,8 +305,7 @@ public class ClientController {
                 }
                 
             }
-            
-        
+                   
             if( "STOP".equals(userCommands[0])){
                 sendMessage(userCommand2); 
                 serverResponse = receiveMessage(); 
@@ -320,35 +322,90 @@ public class ClientController {
     
     }
     
-    private boolean checkFileDetails(File file){
-        return true;
-    }
-    
-    // reference: https://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets#comment88270571_9520911
-    private void sendFileBytes(String fileName) throws IOException{
+    private void STOR(String command) throws IOException {
         
-        File file = new File(storageRoot + fileName);
-        // Get the size of the file
-        long length = file.length();
-        byte[] bytes = new byte[16 * 1024];
+        String[] clientCommands = command.split(" ");
         
-        try (InputStream in = new FileInputStream(file); OutputStream out = clientSocket.getOutputStream()) {
+        if(clientCommands.length == 3){
             
-            int count;
-            while ((count = in.read(bytes)) > 0) {
-                out.write(bytes, 0, count);
+            File fileToSend = new File(storageRoot + clientCommands[2]);
+
+            if(fileToSend.exists() && fileToSend.isFile()){ 
+
+                sendMessage(command); 
+                String serverResponse = receiveMessage(); 
+                System.out.println("FROM SERVER: " + serverResponse); 
+
+                if(serverResponse.charAt(0) == '+'){
+
+                    long length = fileToSend.length();
+                    System.out.println("File size: " + length);
+                    sendMessage(Long.toString(length));
+                    serverResponse = receiveMessage();
+                    System.out.println("FROM SERVER: " + serverResponse); 
+
+                    if(serverResponse.charAt(0) == '+'){
+
+                        // SEND
+                        sendFileBytes(fileToSend);
+
+                        serverResponse = receiveMessage();
+                        System.out.println("FROM SERVER: " + serverResponse); 
+
+                    }
+
+                }
+
+
+            } else {
+
+                System.out.println("-File specified doesn't exits");
+
             }
             
-            out.flush();
-            out.close();
-            in.close();
+        } else {
+            System.out.println("-COMMAND EXPECTED 3 ARGUMENTS, GOT " + Integer.toString(clientCommands.length));
+        }
+
+    }
+    
+   // reference: https://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets#comment88270571_9520911
+    // reference: https://stackoverflow.com/questions/38732970/java-sending-and-receiving-file-over-sockets
+    private void sendFileBytes(File requestedFile) throws IOException{
+        
+        if("A".equals(TYPE_TEXT)){
+            
+            byte[] bytes = new byte[(int) requestedFile.length()];
+            try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(requestedFile))) {
+                outToServer.flush();
+                // Read and send by byte
+                int count = 0;
+                while ((count = bis.read(bytes)) >= 0) {
+                    outToServer.write(bytes, 0, count);
+                }
+                outToServer.flush();
+            }
             
         }
-        
+        else if("B".equals(TYPE_TEXT) || "C".equals(TYPE_TEXT)){ // Binary, Continuous
+            
+            DataOutputStream fileDataToClient;
+            try ( 
+                FileInputStream fileStream = new FileInputStream(requestedFile)) {
+                fileDataToClient = new DataOutputStream(new BufferedOutputStream(clientSocket.getOutputStream()));
+                int count;
+                while ((count = fileStream.read()) >= 0) {
+                    fileDataToClient.write(count);
+                }
+                fileDataToClient.flush();
+            }
+            
+        }
+
     }
     
     // reference: https://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets#comment88270571_9520911
-    private void readFileBytes(String outputFileName, boolean overwrite, long requestedFileSize) throws IOException{
+    private void readFileBytes(String outputFileName, boolean append, long requestedFileSize) throws IOException{
         
         File newFile = new File(storageRoot + outputFileName);
         Date d1;
@@ -358,7 +415,7 @@ public class ClientController {
         
         if("A".equals(TYPE_TEXT)){ // Ascii
             
-            try (FileOutputStream fos = new FileOutputStream(newFile, overwrite); BufferedOutputStream bos = new BufferedOutputStream(fos)) {
+            try (FileOutputStream fos = new FileOutputStream(newFile, append); BufferedOutputStream bos = new BufferedOutputStream(fos)) {
 
                 d1 = new Date();
                 for(int j = 0; j < requestedFileSize; j++){
@@ -382,7 +439,7 @@ public class ClientController {
         }
         else if("B".equals(TYPE_TEXT) || "C".equals(TYPE_TEXT)){ 
             
-            try (FileOutputStream fos = new FileOutputStream(newFile, false)) { // Binary, Continuous
+            try (FileOutputStream fos = new FileOutputStream(newFile, append)) { // Binary, Continuous
                 
                 byte[] bytes = new byte[(int) requestedFileSize];
                 DataInputStream fileDataFromClient = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));

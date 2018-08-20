@@ -15,4 +15,4 @@ Transfer Protocol: RFC 913 (https://tools.ietf.org/html/rfc913)
 | NAME   | Y     | Y    |
 | DONE   | Y     | Y    |
 | RETR   | Y     | Y    |
-| STOR   | -     | -    |
+| STOR   | Y     | Y    |

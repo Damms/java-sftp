@@ -79,12 +79,14 @@ public class AuthenticationController {
 
             if(authenticated){
                 returnStatement = "!<user-id> logged in";
+            } else if (userAcct){
+                returnStatement = "+User-id valid, send password";
+            } else if (userPass){
+                returnStatement = "+User-id valid, send account";
             } else if (userVerified){
                 userVerified = true;
                 returnStatement = "+User-id valid, send account and password";
-            } else {
-                returnStatement = "-Invalid user-id, try again";
-            }
+            } 
 
 
         } catch (FileNotFoundException e) {
