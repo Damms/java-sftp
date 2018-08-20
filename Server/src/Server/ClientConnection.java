@@ -288,7 +288,7 @@ public class ClientConnection extends Thread {
         connectionSocket.close();
     }
     
-    private void LIST(String[] clientCommands) throws IOException{
+    private void LIST(String[] clientCommands){
         
         String requestedDir;
         if(clientCommands.length == 2){ // no requested directory
@@ -307,18 +307,32 @@ public class ClientConnection extends Thread {
                
                 System.out.println("F List");
                 File dir = new File(requestedDir);
-                File[] filesList = dir.listFiles(); 
-                String fileListString = ("+" + requestedDir + '\n');
                 
-                for (File fileQuery : filesList) {
+                if(dir.isDirectory() && dir.exists()){
                     
-                    if (fileQuery.isFile()) {
-                        System.out.println(fileQuery.getName());
-                        fileListString = fileListString.concat(fileQuery.getName() + '\n');
+                    String fileListString = ("+" + requestedDir + '\n');
+                    
+                    // List Folders
+                    String[] dirList = dir.list((File current, String name1) -> new File(current, name1).isDirectory());
+                    for (String dirName : dirList) {
+                        fileListString = fileListString.concat(("Folder: " + dirName  + '\n'));
                     }
-                }   
-                
-                sendMessage(fileListString);
+                    
+                    // List File
+                    File[] filesList = dir.listFiles(); 
+
+                    for (File fileQuery : filesList) {
+
+                        if (fileQuery.isFile()) {
+                            System.out.println(fileQuery.getName());
+                            fileListString = fileListString.concat("File: " + fileQuery.getName() + '\n');
+                        }
+                    }   
+
+                    sendMessage(fileListString);
+                } else {
+                    sendMessage("-Directory doesn't exist");
+                }
                 
                 break;
                 
@@ -327,81 +341,99 @@ public class ClientConnection extends Thread {
                 SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
                 DecimalFormat df = new DecimalFormat("#.##"); 
                 String fileName;
-                String fileOwner;
+                String fileOwner = null;
                 String createdDate = " ";
                 String lastModified;
                 String fileSize;
                 System.out.println("V List");
                 File dir2 = new File(requestedDir);
-                File[] filesList2 = dir2.listFiles();
-                String fileListString2 = ("+" + requestedDir + '\n');
                 
-                for (File fileQuery : filesList2) {
-                    if (fileQuery.isFile()) {
-                        Path filePath = fileQuery.toPath();
-                        fileOwner = Files.getOwner(fileQuery.toPath()).getName();
-                        
-                        // File Size
-                        int multiplication = 1;
-                        long fileSizeDouble = fileQuery.length();
-                        while(fileSizeDouble > 1024 && multiplication < 4){
-                            fileSizeDouble = fileSizeDouble / 1024;
-                            multiplication += 1;
-                        }
-                        
-                        switch (multiplication) {
-                            case 1:
-                                fileSize = ( df.format(fileSizeDouble) + " B" ); //B
-                                break;
-                            case 2:
-                                fileSize = ( df.format(fileSizeDouble) + " KB" ); //B
-                                break;
-                            case 3:
-                                fileSize = ( df.format(fileSizeDouble) + " MB" ); //B
-                                break;
-                            case 4:
-                                fileSize = ( df.format(fileSizeDouble) + " GB" ); //B
-                                break;
-                            default:
-                                fileSize = " ";
-                                break;
-                        }
-                        
-                        // Created Time - Reference: https://stackoverflow.com/questions/2723838/determine-file-creation-date-in-java
-                        
-                        BasicFileAttributes attributes = null;
-                        try
-                        {
-                            attributes =
-                                    Files.readAttributes(filePath, BasicFileAttributes.class);
-                        }
-                        catch (IOException exception)
-                        {
-                            System.out.println("Exception handled when trying to get file " +
-                                    "attributes: " + exception.getMessage());
-                        }
-                        long milliseconds = attributes.creationTime().to(TimeUnit.MILLISECONDS);
-                        if((milliseconds > Long.MIN_VALUE) && (milliseconds < Long.MAX_VALUE))
-                        {
-                            Date creationDate =
-                                    new Date(attributes.creationTime().to(TimeUnit.MILLISECONDS));
-
-                            createdDate = 
-                                    (creationDate.getMonth() + 1) + "/" +
-                                    creationDate.getDate() + "/" +
-                                    (creationDate.getYear() + 1900);
-                        }
-                        
-                        fileName = fileQuery.getName();
-                        lastModified = sdf.format(fileQuery.lastModified());
-                        String detailedFile = " File Name: " + fileName +  " | File Owner: " + fileOwner + " | Date Created: " + createdDate + " | Last Modified: " + lastModified + " | File Size: " + fileSize + '\n';
-                        fileListString2 = fileListString2.concat(detailedFile);
+                if(dir2.isDirectory() && dir2.exists()){
+                    
+                    String fileListString2 = ("+" + requestedDir + '\n');
+                    
+                    // List Folders
+                    String[] dirList2 = dir2.list((File current, String name1) -> new File(current, name1).isDirectory());
+                    for (String dirName : dirList2) {
+                        fileListString2 = fileListString2.concat(("Folder: " + dirName  + '\n'));
                     }
                     
-                }   
-                
-                sendMessage(fileListString2);
-                
+                    // List Files
+                    File[] filesList2 = dir2.listFiles();
+                    
+
+                    for (File fileQuery : filesList2) {
+                        if (fileQuery.isFile()) {
+                            Path filePath = fileQuery.toPath();
+                            try {
+                                fileOwner = Files.getOwner(fileQuery.toPath()).getName();
+                            } catch (IOException ex) {
+                                Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+
+                            // File Size
+                            int multiplication = 1;
+                            long fileSizeDouble = fileQuery.length();
+                            while(fileSizeDouble > 1024 && multiplication < 4){
+                                fileSizeDouble = fileSizeDouble / 1024;
+                                multiplication += 1;
+                            }
+
+                            switch (multiplication) {
+                                case 1:
+                                    fileSize = ( df.format(fileSizeDouble) + " B" ); //B
+                                    break;
+                                case 2:
+                                    fileSize = ( df.format(fileSizeDouble) + " KB" ); //B
+                                    break;
+                                case 3:
+                                    fileSize = ( df.format(fileSizeDouble) + " MB" ); //B
+                                    break;
+                                case 4:
+                                    fileSize = ( df.format(fileSizeDouble) + " GB" ); //B
+                                    break;
+                                default:
+                                    fileSize = " ";
+                                    break;
+                            }
+
+                            // Created Time - Reference: https://stackoverflow.com/questions/2723838/determine-file-creation-date-in-java
+
+                            BasicFileAttributes attributes = null;
+                            try
+                            {
+                                attributes =
+                                        Files.readAttributes(filePath, BasicFileAttributes.class);
+                            }
+                            catch (IOException exception)
+                            {
+                                System.out.println("Exception handled when trying to get file " +
+                                        "attributes: " + exception.getMessage());
+                            }
+                            long milliseconds = attributes.creationTime().to(TimeUnit.MILLISECONDS);
+                            if((milliseconds > Long.MIN_VALUE) && (milliseconds < Long.MAX_VALUE))
+                            {
+                                Date creationDate =
+                                        new Date(attributes.creationTime().to(TimeUnit.MILLISECONDS));
+
+                                createdDate = 
+                                        (creationDate.getMonth() + 1) + "/" +
+                                        creationDate.getDate() + "/" +
+                                        (creationDate.getYear() + 1900);
+                            }
+
+                            fileName = fileQuery.getName();
+                            lastModified = sdf.format(fileQuery.lastModified());
+                            String detailedFile = "File Name: " + fileName +  " | File Owner: " + fileOwner + " | Date Created: " + createdDate + " | Last Modified: " + lastModified + " | File Size: " + fileSize + '\n';
+                            fileListString2 = fileListString2.concat(detailedFile);
+                        }
+
+                    }   
+
+                    sendMessage(fileListString2);
+                } else {
+                    sendMessage("-Directory doesn't exist");
+                }
                 break;
                 
             default:
