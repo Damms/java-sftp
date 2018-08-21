@@ -459,7 +459,8 @@ FROM SERVER: -Not deleted because file doesn't exist.
 ```
 
 ### NAME
-Description
+**NAME <old-file-spec>**
+For renaming file stored on server.
 #### Working Case
 **Trying To Rename File To A File That Already Exists** - Type the following commands in the client command:
 1) USER admin
