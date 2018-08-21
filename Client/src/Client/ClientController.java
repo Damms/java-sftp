@@ -47,6 +47,7 @@ public class ClientController {
         createConnections();
         String userCommand;
         
+        // Wait for connection response from server
         String serverResponse = receiveMessage();
         System.out.println("FROM SERVER: " + serverResponse);
         if(serverResponse.contains("+MIT")){
@@ -56,15 +57,17 @@ public class ClientController {
         
         while(connected){
 
+            // Get user input
             userCommand = inFromUser.readLine();
             
             String[] userCommands = userCommand.split(" ");
 
+            // Run relevant function for user command
             if(null != userCommands[0])switch (userCommands[0]) {
+                
                 case "USER":
                     USER(userCommand);
                     break;
-            //break;
                 case "ACCT":
                     ACCT(userCommand);
                     break;
@@ -98,6 +101,7 @@ public class ClientController {
                 default:
                     System.out.println("-INVALID COMMAND");
                     break;
+                    
             }
             
         }
@@ -111,21 +115,22 @@ public class ClientController {
     **/
     private void createConnections() throws IOException {
         
-        
+        // Connection to server
         try {
             clientSocket = new Socket("localhost", 6789);
         } catch (IOException ex) {
             Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
         }
         
+        // User input
         inFromUser = 
             new BufferedReader(new InputStreamReader(System.in)); 
 
+        // Data stream to server
         outToServer = 
             new DataOutputStream(clientSocket.getOutputStream()); 
-
-        //inFromServerSocket = new InputStreamReader(clientSocket.getInputStream());
         
+        // Data stream from server
         inFromServer = 
             new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); 
         
@@ -207,6 +212,8 @@ public class ClientController {
         sendMessage(command); 
         String serverResponse = receiveMessage(); 
         System.out.println("FROM SERVER: " + serverResponse); 
+        
+        // Change File Transfer Mode
         if('+' == serverResponse.charAt(0)){
             TYPE_TEXT = splitCommand[1];
         }
@@ -235,13 +242,9 @@ public class ClientController {
     private void LIST(String command) throws IOException {
 
         sendMessage(command); 
-        /*String serverResponse = inFromServer.readLine(); 
-        while(!serverResponse.contains("\0")){
-            System.out.println("FROM SERVER: " + serverResponse); 
-            serverResponse = inFromServer.readLine(); 
-        }*/
         String serverResponse = receiveMessage();
         System.out.println("FROM SERVER: " + serverResponse);
+        
     }
     
     /**
@@ -267,28 +270,37 @@ public class ClientController {
         String serverResponse = receiveMessage(); 
         System.out.println("FROM SERVER: " + serverResponse);
         
-        if("+directory ok, send account/password".equals(serverResponse)){     
-            while(!(serverResponse.contains("!Changed working dir to"))){
+        // Directory ok, need to authenticate user
+        if(serverResponse.charAt(0) == '+'){  
+            
+            // Waiting for success change in dir response
+            while(!(serverResponse.charAt(0) == '!')){
                 
                 String userCommand = inFromUser.readLine();
                 String[] userCommands = userCommand.split(" ");
 
                 if(null != userCommands[0])switch (userCommands[0]) {
+                    
                     case "ACCT":
                         sendMessage(userCommand);
                         serverResponse = receiveMessage(); 
                         System.out.println("FROM SERVER: " + serverResponse); 
                         break;
+                        
                     case "PASS":
                         sendMessage(userCommand);
                         serverResponse = receiveMessage(); 
                         System.out.println("FROM SERVER: " + serverResponse); 
                         break;
+                        
                     default:
                         System.out.println("-send account/password");
                         break;
+                        
                 }  
-            }      
+                
+            }  
+            
         }
         
         
@@ -301,6 +313,7 @@ public class ClientController {
     **/
     private void NAME(String userCommand) throws IOException {
 
+        // Send message to server and wait for response
         sendMessage(userCommand);
         String serverResponse = receiveMessage(); 
         System.out.println("FROM SERVER: " + serverResponse);
@@ -310,6 +323,7 @@ public class ClientController {
             String userCommand2;
             String[] userCommands;
             
+            // Wait for user to input TOBE commad followed by filename
             while(true){
                 
                 System.out.println("Send command TOBE followed by the new file name");
@@ -321,6 +335,7 @@ public class ClientController {
                 
             }
             
+            // Send TOBE command with file name to server
             sendMessage(userCommand2);
             serverResponse = receiveMessage(); 
             System.out.println("FROM SERVER: " + serverResponse);
@@ -336,19 +351,24 @@ public class ClientController {
     **/
     private void RETR(String command) throws IOException {
         
+        // Send command
         String userCommand2 = "";
         String [] userCommands;
         sendMessage(command); 
+        
+        // Wait for response
         String serverResponse = receiveMessage(); 
         System.out.println("FROM SERVER: " + serverResponse);    
         long requestedFileSize;
         
         if(serverResponse.charAt(0) != '-'){
+            
             requestedFileSize = Long.valueOf(serverResponse);
+            
+            // Wait for user to enter SEND or STOP command
             while(true){
                 
                 System.out.println("Type: SEND or STOP");
-                
                 
                 try {
                     userCommand2 = inFromUser.readLine();
@@ -363,12 +383,12 @@ public class ClientController {
                 
             }
                    
-            if( "STOP".equals(userCommands[0])){
+            if( "STOP".equals(userCommands[0])){ // cancel
                 sendMessage(userCommand2); 
                 serverResponse = receiveMessage(); 
                 System.out.println("FROM SERVER: " + serverResponse);
             } 
-            else if("SEND".equals(userCommands[0])){
+            else if("SEND".equals(userCommands[0])){ // read file
                 sendMessage(userCommand2); 
                 userCommands = command.split(" ");
                 readFileBytes(userCommands[1], false, requestedFileSize);
@@ -387,24 +407,33 @@ public class ClientController {
         
         String[] clientCommands = command.split(" ");
         
+        // Command must contain 3 argumetns: Command, Type, Filename
         if(clientCommands.length == 3){
             
             File fileToSend = new File(storageRoot + clientCommands[2]);
 
+            // Only send command if file exists otherwise
             if(fileToSend.exists() && fileToSend.isFile()){ 
 
+                // Send command to client
                 sendMessage(command); 
+                
+                // Wait for response
                 String serverResponse = receiveMessage(); 
                 System.out.println("FROM SERVER: " + serverResponse); 
 
+                // + response means server has ability to store file
                 if(serverResponse.charAt(0) == '+'){
 
+                    // Send file size to server
                     long length = fileToSend.length();
                     sendMessage(Long.toString(length));
+                    
+                    // Wait for response
                     serverResponse = receiveMessage();
                     System.out.println("FROM SERVER: " + serverResponse); 
 
-                    if(serverResponse.charAt(0) == '+'){
+                    if(serverResponse.charAt(0) == '+'){ // Server has enough space to save file
 
                         // SEND
                         sendFileBytes(fileToSend);
@@ -438,31 +467,41 @@ public class ClientController {
     **/
     private void sendFileBytes(File requestedFile) throws IOException{
         
-        if("A".equals(TYPE_TEXT)){
+        if("A".equals(TYPE_TEXT)){ // ASCII Mode
             
             byte[] bytes = new byte[(int) requestedFile.length()];
+            
             try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(requestedFile))) {
-                outToServer.flush();
-                // Read and send by byte
+                
                 int count;
+                outToServer.flush();
+                
+                // Read and write byte
                 while ((count = bis.read(bytes)) >= 0) {
                     outToServer.write(bytes, 0, count);
                 }
+                
                 outToServer.flush();
+                
             }
             
         }
-        else if("B".equals(TYPE_TEXT) || "C".equals(TYPE_TEXT)){ // Binary, Continuous
+        else if("B".equals(TYPE_TEXT) || "C".equals(TYPE_TEXT)){ // BINARY, CONTINUOUS mode
             
             DataOutputStream fileDataToClient;
-            try ( 
-                FileInputStream fileStream = new FileInputStream(requestedFile)) {
+            
+            try (FileInputStream fileStream = new FileInputStream(requestedFile)) {
+                
                 fileDataToClient = new DataOutputStream(new BufferedOutputStream(clientSocket.getOutputStream()));
                 int count;
+                
+                // Read and write whole file
                 while ((count = fileStream.read()) >= 0) {
                     fileDataToClient.write(count);
                 }
+                
                 fileDataToClient.flush();
+                
             }
             
         }
@@ -481,25 +520,29 @@ public class ClientController {
         File newFile = new File(storageRoot + outputFileName);
         Date d1;
         Date d2;
-        long msPassed; // ms
-        long waitTime = (requestedFileSize / BYTE_PER_MS) + BYTE_PER_MS;
+        long msPassed;
+        long waitTime = (requestedFileSize / BYTE_PER_MS) + BYTE_PER_MS; // Timeout 
         
-        if("A".equals(TYPE_TEXT)){ // Ascii
+        if("A".equals(TYPE_TEXT)){ // ASCII mode
             
             try (FileOutputStream fos = new FileOutputStream(newFile, append); BufferedOutputStream bos = new BufferedOutputStream(fos)) {
 
                 d1 = new Date();
+                
+                // For expected size of file
                 for(int j = 0; j < requestedFileSize; j++){
                     
+                    // Get data 
                     bos.write(inFromServer.read());
                     
-                    if(j%100 == 0){ // every 100 bytes
+                    if(j%100 == 0){ // update status every 100 bytes
                         System.out.printf("File Transfer: %.2f %% \n", ( (float) ( ((float)j)/((float)requestedFileSize)) * 100) );
                     }
                     
+                    // Get time
                     d2 = new Date();
                     msPassed = (d2.getTime() - d1.getTime());
-                    if(j%100 == 0){ // every 100 bytes
+                    if(j%100 == 0){ // update status every 100 bytes
                         System.out.println("Time left until timeout:  " + (waitTime - msPassed) + " ms" );
                     }
                     if(msPassed >= waitTime){
@@ -507,14 +550,16 @@ public class ClientController {
                     }
                     
                 }   
+                
                 System.out.println("File received");
                 bos.flush();
                 bos.close();
                 fos.close();
+                
             }
             
         }
-        else if("B".equals(TYPE_TEXT) || "C".equals(TYPE_TEXT)){ 
+        else if("B".equals(TYPE_TEXT) || "C".equals(TYPE_TEXT)){ // BINARY, CONTINUOUS mode
             
             try (FileOutputStream fos = new FileOutputStream(newFile, append)) { // Binary, Continuous
                 
@@ -525,25 +570,32 @@ public class ClientController {
                 int count;
                 d1 = new Date();
 
+                // Keep reading until read amount of byte expected
                 while (true) {
+                    
+                    // Get data
                     count = fileDataFromClient.read(bytes);
                     bytesRead += count;
                     fos.write(bytes, 0, count);
                     System.out.printf("File Transfer: %.2f %% \n", ( (float) ( ((float)bytesRead)/((float)requestedFileSize)) * 100) );
                     
-                    if (bytesRead >= ((int) requestedFileSize)){ // MAX - If it's above 8192 you'll receive garbage value
+                    if (bytesRead >= ((int) requestedFileSize)){ // got expected amount of data
                         break;
                     }
 
+                    // Get time
                     d2 = new Date();
                     msPassed = (d2.getTime() - d1.getTime());
                     System.out.println("Time left until timeout:  " + (waitTime - msPassed) + " ms" );
-                    if(msPassed >= waitTime){
+                    
+                    if(msPassed >= waitTime){ // timeout
                         break;
                     }
 
                 }
+                
                 fos.flush();
+                
             }
             
         }

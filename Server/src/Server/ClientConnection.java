@@ -943,24 +943,32 @@ public class ClientConnection extends Thread {
         if("A".equals(TYPE_TEXT)){ // ASCII mode
             
             byte[] bytes = new byte[(int) requestedFile.length()];
+            
             try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(requestedFile))) {
-                outToClient.flush();
-                // Read and send by byte
+                
                 int count;
+                outToClient.flush();
+                
+                // Read and send data for whole file
                 while ((count = bis.read(bytes)) >= 0) {
                     outToClient.write(bytes, 0, count);
                 }
+                
                 outToClient.flush();
+                
             }
             
         }
         else if("B".equals(TYPE_TEXT) || "C".equals(TYPE_TEXT)){ // BINARY, CONTINUOUS Mode
             
             DataOutputStream fileDataToClient;
-            try ( 
-                FileInputStream fileStream = new FileInputStream(requestedFile)) {
+            
+            try (FileInputStream fileStream = new FileInputStream(requestedFile)) {
+                
                 fileDataToClient = new DataOutputStream(new BufferedOutputStream(connectionSocket.getOutputStream()));
                 int count;
+                
+                // Read and send data for whole file
                 while ((count = fileStream.read()) >= 0) {
                     fileDataToClient.write(count);
                 }
@@ -992,11 +1000,14 @@ public class ClientConnection extends Thread {
 
                 d1 = new Date(); // start time
                 
+                // For read byte for the expected file size
                 for(int j = 0; j < requestedFileSize; j++){
                     
+                    // Get data from BufferedReader
                     bos.write(inFromClient.read());
                     
-                    d2 = new Date(); // to get time elapsed
+                    // get time
+                    d2 = new Date(); 
                     msPassed = (d2.getTime() - d1.getTime());
                     System.out.println("Time passed: " + msPassed + " Timeout time: " + ((int) waitTime) );
                     
@@ -1008,10 +1019,12 @@ public class ClientConnection extends Thread {
                     }
                     
                 }   
+                
                 System.out.println("File received");
                 bos.flush();
                 bos.close();
                 fos.close();
+                
             }
             
         }
@@ -1026,8 +1039,10 @@ public class ClientConnection extends Thread {
                 int count;
                 d1 = new Date(); // start time
 
+                // While haven't received expected amount of data or until timeout
                 while (true) {
                     
+                    // Get data
                     count = fileDataFromClient.read(bytes);
                     bytesRead += count;
                     fos.write(bytes, 0, count);
@@ -1038,6 +1053,7 @@ public class ClientConnection extends Thread {
                         break;
                     }
 
+                    // Get time
                     d2 = new Date(); // get time elapsed
                     msPassed = (d2.getTime() - d1.getTime());
                     System.out.println("Time passed: " + msPassed + " Timeout time: " + ((int) waitTime) );
@@ -1048,7 +1064,9 @@ public class ClientConnection extends Thread {
                     }
 
                 }
+                
                 fos.flush();
+                
             }
             
         }

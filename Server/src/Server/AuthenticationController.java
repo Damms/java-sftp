@@ -66,6 +66,7 @@ public class AuthenticationController {
                 if(clientCommands[1].equals(lineDets[0])){
                     
                     userVerified = true;
+                    superID = false;
                     authenticated = false;
                     userAcct = false;
                     userPass = false;
