@@ -689,34 +689,48 @@ public class ClientConnection extends Thread {
             case "NEW": // New generation of file
                 
                 if(newFile.exists() && newFile.isFile()){ 
-                    
-                    //sendMessage("-File exists, but system doesn't support generations");
-                    sendMessage("+File exists, will create new generation of file");
-                    
-                    try {
-                        
-                        clientCommand = receiveMessage();
-                        long requestedFileSize = Long.valueOf(clientCommand);
-                        
-                        int fileVersion = 1;
-                        String[] splitFileName = null;
-                        
-                        while(newFile.exists()){
-                                
-                            fileVersion++;
-                            splitFileName = clientCommands[2].split("\\."); // split file name and the file extension
-                            System.out.println("Filename: " + clientCommands[2]);
+
+                    int fileVersion = 1;
+                    String[] splitFileName = null;
+                    boolean validFile = true;
+
+                    while(newFile.exists()){
+
+                        fileVersion++;
+                        splitFileName = clientCommands[2].split("\\."); // split file name and the file extension
+                        System.out.println("Filename: " + clientCommands[2]);
+
+                        try {
                             newFile = new File(currentDir + splitFileName[0] + "(" + fileVersion + ")." + splitFileName[1]);
+                        } catch(ArrayIndexOutOfBoundsException err){
+                            System.out.println(err);
+                            validFile = false;
+                            break;
+
+                        }
+
+                    }
+                    
+                    if(validFile){
+                        
+                        sendMessage("+File exists, will create new generation of file");    
+                        try {
+                        
+                            clientCommand = receiveMessage();
+                            long requestedFileSize = Long.valueOf(clientCommand);
+
+                            getFile((splitFileName[0] + "(" + fileVersion + ")." + splitFileName[1]), false, requestedFileSize);
+
+                        } catch (IOException ex) {
+
+                            Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
 
                         }
                         
-                        getFile((splitFileName[0] + "(" + fileVersion + ")." + splitFileName[1]), false, requestedFileSize);
-                        
-                    } catch (IOException ex) {
-                        
-                        Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
-                        
+                    } else {
+                        sendMessage("-File exists, but system doesn't support generations of files without an extension");
                     }
+                    
                     
                 } else {
                     

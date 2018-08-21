@@ -35,7 +35,7 @@ public class ClientController {
     String TYPE_TEXT = "B";
     String storageRoot = "./storage/";
     boolean connected = false;
-    long BYTE_PER_MS = 50;
+    long BYTE_PER_MS = 32;
     
     public void run() throws IOException {
         
