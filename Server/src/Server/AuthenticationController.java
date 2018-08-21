@@ -99,7 +99,9 @@ public class AuthenticationController {
             } else if (userVerified){
                 userVerified = true;
                 returnStatement = "+User-id valid, send account and password";
-            } 
+            } else {
+                returnStatement = "-Invalid user-id, try again";
+            }
 
 
         } catch (FileNotFoundException e) {
