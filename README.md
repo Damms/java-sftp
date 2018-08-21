@@ -82,6 +82,7 @@ ACCT, PASS cannot be used until the USER is identified. ALL other commands can't
 
 ### USER
 **USER user-id**
+
 Authenticates USER
 #### Working Case
 Type the following commands in the client command:
@@ -108,6 +109,7 @@ FROM SERVER: -Invalid user-id, try again
 
 ### ACCT
 **ACCT account**
+
 Authenticates ACCT
 #### Working Case
 Type the following commands in the client command:
@@ -140,6 +142,7 @@ FROM SERVER: -Invalid account, try again
 
 ### PASS
 **PASS password**
+
 Authenticates PASS
 #### Working Case
 Type the following commands in the client command:
@@ -231,6 +234,7 @@ FROM SERVER: ! Account valid, logged-in
 
 ### TYPE
 **TYPE { A | B | C }**
+
 Changes file transfer mode
 *A - ASCII*
 *B - BINARY*
@@ -294,6 +298,7 @@ FROM SERVER: -Type not valid
 
 ### LIST
 **LIST { F | V } directory-path**
+
 List files and folders in the specified directory path.
 If no directory path specified then lists files and folders in current working directory
 #### Working Cases
@@ -369,6 +374,7 @@ FROM SERVER: -Directory doesn't exist
 
 ### CDIR
 **CDIR new-directory**
+
 Changes current working directory to directory specified.
 NOTE: To change to root then *new-directory = "/"*.
 #### Working Cases
@@ -428,6 +434,7 @@ FROM SERVER: -Can't connect to directory because: ./storage/NOTAFOLDER/ is not a
 
 ### KILL
 **KILL file-spec**
+
 Deletes specified file, searches from current working directory
 #### Working Case
 **Deleting File** - Type the following commands in the client command:
@@ -460,6 +467,7 @@ FROM SERVER: -Not deleted because file doesn't exist.
 
 ### NAME
 **NAME old-file-spec**
+
 For renaming file stored on server.
 #### Working Case
 **Trying To Rename File To A File That Already Exists** - Type the following commands in the client command:
@@ -537,6 +545,7 @@ FROM SERVER: -File wasn't renamed because file with specified name already exist
 
 ### DONE
 **DONE**
+
 Tells remote system that you're done and closes connections.
 #### Working Case
 ype the following commands in the client command:
@@ -557,6 +566,7 @@ Client will now close
 
 ### RETR
 **RETR file-spec**
+
 Retrieve specified file from server
 **NOTE:** *Cannot send images using Ascii mode*
 #### Working Cases
@@ -643,6 +653,7 @@ FROM SERVER: -File doesn't exist
 
 ### STOR
 **STOR { NEW | OLD | APP } file-spec**
+
 Stores specified file in server's storage.
 * New - Generates new file if file already exists.
 * OLD - Overwrites file if file already exists
