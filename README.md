@@ -81,7 +81,7 @@ ACCT, PASS cannot be used until the USER is identified. ALL other commands can't
 **FOR MARKER:** I have storage.zip file in the Client and Server folders, this is a backup of the current state of the Storage folders for the Client and Server. At the end of testing each command delete the storage folder and unpack the zip folder, this is to ensure that the console outputs match the test case outputs.
 
 ### USER
-**USER <user-id>**
+**USER user-id**
 Authenticates USER
 #### Working Case
 Type the following commands in the client command:
@@ -107,7 +107,7 @@ FROM SERVER: -Invalid user-id, try again
 ```
 
 ### ACCT
-**ACCT <account>**
+**ACCT account**
 Authenticates ACCT
 #### Working Case
 Type the following commands in the client command:
@@ -139,7 +139,7 @@ FROM SERVER: -Invalid account, try again
 ```
 
 ### PASS
-**PASS <password>**
+**PASS password**
 Authenticates PASS
 #### Working Case
 Type the following commands in the client command:
@@ -293,7 +293,7 @@ FROM SERVER: -Type not valid
 ```
 
 ### LIST
-**LIST { F | V } <directory-path>**
+**LIST { F | V } directory-path**
 List files and folders in the specified directory path.
 If no directory path specified then lists files and folders in current working directory
 #### Working Cases
@@ -368,7 +368,7 @@ FROM SERVER: -Directory doesn't exist
 ```
 
 ### CDIR
-**CDIR <new-directory>**
+**CDIR new-directory**
 Changes current working directory to directory specified.
 NOTE: To change to root then *new-directory = "/"*.
 #### Working Cases
@@ -427,7 +427,7 @@ FROM SERVER: -Can't connect to directory because: ./storage/NOTAFOLDER/ is not a
 ```
 
 ### KILL
-**KILL <file-spec>**
+**KILL file-spec**
 Deletes specified file, searches from current working directory
 #### Working Case
 **Deleting File** - Type the following commands in the client command:
@@ -459,7 +459,7 @@ FROM SERVER: -Not deleted because file doesn't exist.
 ```
 
 ### NAME
-**NAME <old-file-spec>**
+**NAME old-file-spec**
 For renaming file stored on server.
 #### Working Case
 **Trying To Rename File To A File That Already Exists** - Type the following commands in the client command:
@@ -556,7 +556,7 @@ Client will now close
 
 
 ### RETR
-**RETR <file-spec>**
+**RETR file-spec**
 Retrieve specified file from server
 **NOTE:** *Cannot send images using Ascii mode*
 #### Working Cases
@@ -642,7 +642,7 @@ FROM SERVER: -File doesn't exist
 ```
 
 ### STOR
-**STOR { NEW | OLD | APP } <file-spec>**
+**STOR { NEW | OLD | APP } file-spec**
 Stores specified file in server's storage.
 * New - Generates new file if file already exists.
 * OLD - Overwrites file if file already exists
