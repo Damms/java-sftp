@@ -10,17 +10,17 @@ This project holds both server and client applications which follow a Simple Fil
 
 | COMMAND | Client | Server |
 | :---         |     :---:      |          ---: |
-| USER   | Y     | Y    |
-| ACCT   | Y     | Y    |
-| PASS   | Y     | Y    |
-| TYPE   | Y     | Y    |
-| LIST   | Y     | Y    |
-| CDIR   | Y     | Y    |
-| KILL   | Y     | Y    |
-| NAME   | Y     | Y    |
-| DONE   | Y     | Y    |
-| RETR   | Y     | Y    |
-| STOR   | Y     | Y    |
+| [USER](#user)   | Y     | Y    |
+| [ACCT](#acct)   | Y     | Y    |
+| [PASS](#pass)   | Y     | Y    |
+| [TYPE](#type)   | Y     | Y    |
+| [LIST](#list)   | Y     | Y    |
+| [CDIR](#cdir)   | Y     | Y    |
+| [KILL](#kill)   | Y     | Y    |
+| [NAME](#name)   | Y     | Y    |
+| [DONE](#done)   | Y     | Y    |
+| [RETR](#retr)   | Y     | Y    |
+| [STOR](#stor)   | Y     | Y    |
 
 ## Running the project
 1) Open your Java IDE of choice
@@ -236,7 +236,7 @@ Changes file transfer mode
 *B - BINARY*
 *C - CONTINUOUS*
 #### Working Cases
-Type the following commands in the client command:
+**Changing to Type A** - Type the following commands in the client command:
 1) USER admin
 2) TYPE A
 
@@ -250,7 +250,7 @@ TYPE A
 FROM SERVER: +Using A mode
 ```
 
-Type the following commands in the client command:
+**Changing to Type B** - Type the following commands in the client command:
 1) USER admin
 2) TYPE B
 
@@ -264,7 +264,7 @@ TYPE B
 FROM SERVER: +Using B mode
 ```
 
-Type the following commands in the client command:
+**Changing to Type C** - Type the following commands in the client command:
 1) USER admin
 2) TYPE C
 
