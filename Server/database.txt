@@ -1,6 +1,5 @@
 USER ACCT PASS
-USER4 JDAMMS TEST
-USER5 PHOB ANOTHERONE
+username accountname password
 admin - -
 admin2 - PASS
 admin3 ACCT -
