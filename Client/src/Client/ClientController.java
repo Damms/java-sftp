@@ -1,8 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+/**
+ * Jaedyn Damms - 955581057 - JDAM534
+ * COMPSYS 725 - ASSIGNMENT 1
+ * SFTP - CLIENT / SERVER APPLICATION
+ **/
+
 package Client;
 
 import java.io.BufferedInputStream;
@@ -15,8 +16,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.InputStream;
 import java.net.Socket;
 import java.util.Date;
 import java.util.logging.Level;
@@ -37,13 +36,19 @@ public class ClientController {
     boolean connected = false;
     long BYTE_PER_MS = 32;
     
+    /**
+     * Function the starts/runs the client controller
+     * Sets up needed connections
+     * Runs relevant functions for user commands
+     * @throws java.io.IOException
+    **/
     public void run() throws IOException {
         
         createConnections();
         String userCommand;
         
         String serverResponse = receiveMessage();
-        System.out.println("Response from server: " + serverResponse);
+        System.out.println("FROM SERVER: " + serverResponse);
         if(serverResponse.contains("+MIT")){
             connected = true;
             System.out.println("Successfully established connection to server");
@@ -52,7 +57,6 @@ public class ClientController {
         while(connected){
 
             userCommand = inFromUser.readLine();
-            //System.out.println("GOT USER INPUT: " + userCommand + "\n");
             
             String[] userCommands = userCommand.split(" ");
 
@@ -102,6 +106,9 @@ public class ClientController {
         
     }
     
+    /**
+     * Creates connections needed between client and server
+    **/
     private void createConnections() throws IOException {
         
         
@@ -125,9 +132,12 @@ public class ClientController {
         
     }
     
+    /**
+     * receive null terminated message from server
+    **/
     private String receiveMessage() throws IOException {
         String sentence = "";
-        int character = 0;
+        int character;
 
         while (true){
             
@@ -143,10 +153,17 @@ public class ClientController {
         return sentence;
     }
     
+    /**
+     * Sends null terminated message to server
+    **/
     private void sendMessage(String message) throws IOException{
         outToServer.writeBytes(message + '\0'); 
     }
     
+    /**
+     * Requests server to run USER command
+     * USER command is to authenticate specified USER
+    **/
     private void USER(String command) throws IOException {
         
         sendMessage(command); 
@@ -155,6 +172,10 @@ public class ClientController {
 
     }
     
+    /**
+     * Requests server to run ACCT command
+     * ACCT command is to authenticate specified ACCT
+    **/
     private void ACCT(String command) throws IOException {
 
         sendMessage(command); 
@@ -163,6 +184,10 @@ public class ClientController {
 
     }
     
+    /**
+     * Requests server to run PASS command
+     * PASS command is to authenticate specified PASS
+    **/
     private void PASS(String command) throws IOException {
 
         sendMessage(command); 
@@ -171,6 +196,11 @@ public class ClientController {
 
     }
     
+    /**
+     * Requests server to run TYPE command
+     * TYPE command is to change File Transfer Type
+     * Then changes TYPE for client
+    **/
     private void TYPE(String command) throws IOException {
 
         String [] splitCommand = command.split(" ");
@@ -183,6 +213,11 @@ public class ClientController {
 
     }
     
+    /**
+     * Requests server to run DONE command
+     * DONE command is to close connections between client and server
+     * Then closes client connection
+    **/
     private void DONE(String command) throws IOException {
 
         sendMessage(command); 
@@ -192,6 +227,11 @@ public class ClientController {
         connected = false;
     }
     
+    /**
+     * Requests server to run LIST command
+     * List is to list files/folders in current directory
+     * Then lists files/folders
+    **/
     private void LIST(String command) throws IOException {
 
         sendMessage(command); 
@@ -204,6 +244,10 @@ public class ClientController {
         System.out.println("FROM SERVER: " + serverResponse);
     }
     
+    /**
+     * Requests server to run KILL command
+     * KILL command is to delete specified file
+    **/
     private void KILL(String command) throws IOException {
         
         sendMessage(command); 
@@ -212,6 +256,11 @@ public class ClientController {
 
     }
 
+    /**
+     * Requests server to run CDIR command
+     * CDIR command is to change the current working directory
+     * Waits for response and performs needed logic
+    **/
     private void CDIR(String command) throws IOException {
 
         sendMessage(command); 
@@ -245,6 +294,11 @@ public class ClientController {
         
     }
 
+    /**
+     * Requests server to run NAME command
+     * NAME command is to rename specified file
+     * Waits for response and performs needed logic
+    **/
     private void NAME(String userCommand) throws IOException {
 
         sendMessage(userCommand);
@@ -258,7 +312,7 @@ public class ClientController {
             
             while(true){
                 
-                System.out.println("-Send command TOBE followed by the new file name");
+                System.out.println("Send command TOBE followed by the new file name");
                 userCommand2 = inFromUser.readLine();
                 userCommands = userCommand2.split(" ");
                 if("TOBE".equals(userCommands[0]) && userCommands.length == 2){
@@ -275,6 +329,11 @@ public class ClientController {
 
     }
 
+    /**
+     * Requests server to run RETR command
+     * RETR command is to request Server to send specified file to client
+     * Waits for response and performs needed logic
+    **/
     private void RETR(String command) throws IOException {
         
         String userCommand2 = "";
@@ -286,7 +345,6 @@ public class ClientController {
         
         if(serverResponse.charAt(0) != '-'){
             requestedFileSize = Long.valueOf(serverResponse);
-            System.out.println("FILE SIZE: " + requestedFileSize);
             while(true){
                 
                 System.out.println("Type: SEND or STOP");
@@ -294,7 +352,6 @@ public class ClientController {
                 
                 try {
                     userCommand2 = inFromUser.readLine();
-                    System.out.println("User input: " + userCommand2);
                 } catch (IOException ex) {
                     Logger.getLogger(ClientController.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -315,13 +372,17 @@ public class ClientController {
                 sendMessage(userCommand2); 
                 userCommands = command.split(" ");
                 readFileBytes(userCommands[1], false, requestedFileSize);
-                System.out.println("Done receiving files");
             }
             
         } 
     
     }
     
+    /**
+     * Requests server to run STOR command
+     * STOR command is to send a file from client to server
+     * Waits for response and performs needed logic
+    **/
     private void STOR(String command) throws IOException {
         
         String[] clientCommands = command.split(" ");
@@ -339,7 +400,6 @@ public class ClientController {
                 if(serverResponse.charAt(0) == '+'){
 
                     long length = fileToSend.length();
-                    System.out.println("File size: " + length);
                     sendMessage(Long.toString(length));
                     serverResponse = receiveMessage();
                     System.out.println("FROM SERVER: " + serverResponse); 
@@ -369,8 +429,13 @@ public class ClientController {
 
     }
     
-   // reference: https://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets#comment88270571_9520911
-    // reference: https://stackoverflow.com/questions/38732970/java-sending-and-receiving-file-over-sockets
+    /**
+     * Sends file to server
+     * Supports three file transfer modes controlled by TYPE function
+     * ASCII, BINARY, CONTINUOUS
+     * reference: https://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets#comment88270571_9520911
+     * reference: https://stackoverflow.com/questions/38732970/java-sending-and-receiving-file-over-sockets
+    **/
     private void sendFileBytes(File requestedFile) throws IOException{
         
         if("A".equals(TYPE_TEXT)){
@@ -379,7 +444,7 @@ public class ClientController {
             try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(requestedFile))) {
                 outToServer.flush();
                 // Read and send by byte
-                int count = 0;
+                int count;
                 while ((count = bis.read(bytes)) >= 0) {
                     outToServer.write(bytes, 0, count);
                 }
@@ -404,7 +469,13 @@ public class ClientController {
 
     }
     
-    // reference: https://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets#comment88270571_9520911
+    /**
+     * Receives files from server
+     * Supports three file transfer modes controlled by TYPE function
+     * ASCII, BINARY, CONTINUOUS
+     * reference: https://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets#comment88270571_9520911
+     * reference: https://stackoverflow.com/questions/38732970/java-sending-and-receiving-file-over-sockets
+    **/    
     private void readFileBytes(String outputFileName, boolean append, long requestedFileSize) throws IOException{
         
         File newFile = new File(storageRoot + outputFileName);
@@ -422,9 +493,15 @@ public class ClientController {
                     
                     bos.write(inFromServer.read());
                     
+                    if(j%100 == 0){ // every 100 bytes
+                        System.out.printf("File Transfer: %.2f %% \n", ( (float) ( ((float)j)/((float)requestedFileSize)) * 100) );
+                    }
+                    
                     d2 = new Date();
                     msPassed = (d2.getTime() - d1.getTime());
-                    System.out.println("Time passed: " + msPassed + " Timeout time: " + ((int) waitTime) );
+                    if(j%100 == 0){ // every 100 bytes
+                        System.out.println("Time left until timeout:  " + (waitTime - msPassed) + " ms" );
+                    }
                     if(msPassed >= waitTime){
                         break;
                     }
@@ -452,16 +529,15 @@ public class ClientController {
                     count = fileDataFromClient.read(bytes);
                     bytesRead += count;
                     fos.write(bytes, 0, count);
-                    System.out.println("Bytes Read Count: " + bytesRead + " File Size: " + ((int) requestedFileSize) );
-
+                    System.out.printf("File Transfer: %.2f %% \n", ( (float) ( ((float)bytesRead)/((float)requestedFileSize)) * 100) );
+                    
                     if (bytesRead >= ((int) requestedFileSize)){ // MAX - If it's above 8192 you'll receive garbage value
-                        System.out.println("BREAK " );
                         break;
                     }
 
                     d2 = new Date();
                     msPassed = (d2.getTime() - d1.getTime());
-                    System.out.println("Time passed: " + msPassed + " Timeout time: " + ((int) waitTime) );
+                    System.out.println("Time left until timeout:  " + (waitTime - msPassed) + " ms" );
                     if(msPassed >= waitTime){
                         break;
                     }

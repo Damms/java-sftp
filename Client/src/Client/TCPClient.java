@@ -1,22 +1,18 @@
-package Client;
-
 /**
- * Code is taken from Computer Networking: A Top-Down Approach Featuring 
- * the Internet, second edition, copyright 1996-2002 J.F Kurose and K.W. Ross, 
- * All Rights Reserved.
+ * Jaedyn Damms - 955581057 - JDAM534
+ * COMPSYS 725 - ASSIGNMENT 1
+ * SFTP - CLIENT / SERVER APPLICATION
  **/
 
-import java.io.*; 
-import java.net.*; 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+package Client;
 
 class TCPClient { 
     
     public static void main(String argv[]) throws Exception { 
          
-        ClientController clientControls = new ClientController();
-        clientControls.run();
+        // Needed to create external class so it's not static
+        ClientController clientControls = new ClientController(); // Creates a new client controller
+        clientControls.run(); // runs the client controller
 
     }
     

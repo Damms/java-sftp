@@ -1,8 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+/**
+ * Jaedyn Damms - 955581057 - JDAM534
+ * COMPSYS 725 - ASSIGNMENT 1
+ * SFTP - CLIENT / SERVER APPLICATION
+ **/
+
 package Server;
 
 import static Server.TCPServer.databasePath;
@@ -35,6 +36,12 @@ public class AuthenticationController {
         connectToDatabase();
     }
     
+    /**
+     * Sees if specified user is in database
+     * @param clientCommands
+     * @return 
+     * @throws java.io.IOException 
+    **/
     public String USER(String[] clientCommands) throws IOException {
         
         String returnStatement = "";
@@ -50,10 +57,14 @@ public class AuthenticationController {
                 Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
             }
 
+            // Read each line in database file and check if USER matches
             for (String line = reader.readLine(); line != null; line = reader.readLine()) {
                 System.out.println(line);
                 String[] lineDets = line.split(" ", -1);
+                
+                // If USER matches
                 if(clientCommands[1].equals(lineDets[0])){
+                    
                     userVerified = true;
                     authenticated = false;
                     userAcct = false;
@@ -61,22 +72,23 @@ public class AuthenticationController {
                     user = lineDets[0];
                     acct = lineDets[1];
                     pass = lineDets[2];
-                    if("-".equals(acct)){
+                    
+                    if("-".equals(acct)){ // USER doesn't require an account
                         userAcct = true;
                     }
-                    if("-".equals(pass)){
+                    if("-".equals(pass)){ // USER doesn't require a password
                         userPass = true;
                     }
-                    if(userVerified && userAcct && userPass){
+                    if(userVerified && userAcct && userPass){ // USER doesn't require both account and password
                         authenticated = true;
                         superID = true;
                     }
-                    // check if need user name and pass to log in 
-                    // authenticated = true;
+                    
                 }
-                //outToClient.writeBytes(line + '\n');
+                
             }
 
+            // Return correct message
             if(authenticated){
                 returnStatement = "!<user-id> logged in";
             } else if (userAcct){
@@ -103,46 +115,68 @@ public class AuthenticationController {
     
     }
     
-    
+    /**
+     * Checks if specified account matches allocated USER in the database
+     * @param clientCommands
+     * @return 
+     * @throws java.io.IOException 
+    **/
     public String ACCT (String[] clientCommands) throws IOException{
         
         String returnStatement;
         
-        if(authenticated){ 
-            //outToClient.writeBytes("!<user-id> logged in" + '\n');
+        
+        if(authenticated){ // User is already authenticated
             returnStatement = "!<user-id> logged in";
         } 
-        else if (userVerified) {
+        else if (userVerified) { // User needs to be identified before continuing
         
+            // If account matches that assigne to USER
             if(clientCommands[1].equals(acct)){
                 userAcct = true;
+                
                 if(userPass){
                     authenticated = true;
                     returnStatement = "! Account valid, logged-in";
                 } else {
                     returnStatement = "+Account valid, send password";
                 }
-            } else {
+                
+            } 
+            
+            else {
                 returnStatement = "-Invalid account, try again";
             }
-        } else {
+            
+        } 
+        
+        else {
             returnStatement = "-Please identify your user-id";
         }
+        
         return returnStatement;
         
     }
     
-   public String PASS (String[] clientCommands) throws IOException{
+    /**
+     * Check if specified pass matches allocated USER in databse
+     * @param clientCommands
+     * @return 
+     * @throws java.io.IOException 
+    **/
+    public String PASS (String[] clientCommands) throws IOException{
         
         String returnStatement;
         
-        if(authenticated){ 
+        if(authenticated){ // USER is already authenticated
             //outToClient.writeBytes("!<user-id> logged in" + '\n');
             returnStatement = "!<user-id> logged in";
         } 
-        else if(userVerified) {
+        else if(userVerified) { // USER needs to be identified before continuing
         
+            // If password matches that assigned to USER
             if(clientCommands[1].equals(pass)){
+                
                 userPass = true;
                 if(userAcct){
                     authenticated = true;
@@ -150,29 +184,48 @@ public class AuthenticationController {
                 } else {
                     returnStatement = "+Send account";
                 }
-            } else {
+                
+            } 
+            
+            else {
                 returnStatement = "-Wrong password, try again";
             }
-        } else {
+            
+        } 
+        
+        else {
             returnStatement = "-Please identify your user-id";
         }
+        
         return returnStatement;
         
     }
    
-   public boolean checkAcct(String Acct){
+    /**
+     * Checks if specified account matches assigned account
+     * @param Acct
+     * @return 
+    **/
+    public boolean checkAcct(String Acct){
        
         return Acct.equals(acct);
        
-   }
+    }
    
+    /**
+     * Checks if specified pass matches allocated pass
+     * @param Pass
+     * @return 
+    **/
     public boolean checkPass(String Pass){
         
        return Pass.equals(pass);
         
    }
 
-
+    /**
+     * Connects to database to get authentication details
+    **/
     private void connectToDatabase() {
         
         // Database Connection
@@ -185,6 +238,9 @@ public class AuthenticationController {
         
     }
     
+    /**
+     * Resets authentication status
+    **/
     public void reset() {
         authenticated = false;
         userVerified = false;

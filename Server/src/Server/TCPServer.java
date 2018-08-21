@@ -1,12 +1,11 @@
-package Server;
-
 /**
- * Code is taken from Computer Networking: A Top-Down Approach Featuring 
- * the Internet, second edition, copyright 1996-2002 J.F Kurose and K.W. Ross, 
- * All Rights Reserved.
+ * Jaedyn Damms - 955581057 - JDAM534
+ * COMPSYS 725 - ASSIGNMENT 1
+ * SFTP - CLIENT / SERVER APPLICATION
  **/
 
-import java.io.*; 
+package Server;
+
 import java.net.*; 
 
 class TCPServer { 
@@ -17,13 +16,13 @@ class TCPServer {
     
     { 
         
-        ServerSocket welcomeSocket = new ServerSocket(6789); 
+        ServerSocket welcomeSocket = new ServerSocket(6789); // local host 
         
-	while(true){
+	while(true){ // Accept multiple clients
             
             Socket connectionSocket = welcomeSocket.accept(); 
             ClientConnection clientConnection = new ClientConnection(connectionSocket);
-            clientConnection.start();
+            clientConnection.start(); // start client thread
             
         }
         

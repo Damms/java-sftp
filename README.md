@@ -148,7 +148,7 @@ Description
 
 ### STOR
 Description
-Note: STOR only supports files with an extension. Meaning a file "example" is not supported, but a file "example.xx" is supported.
+Note: STOR only supports generation of new files with an extension. Meaning generation of a file "example" is not supported, but a file "example.xx" is supported.
 #### Working Case
 --
 #### Failure Case

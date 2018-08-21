@@ -1,19 +1,17 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+/**
+ * Jaedyn Damms - 955581057 - JDAM534
+ * COMPSYS 725 - ASSIGNMENT 1
+ * SFTP - CLIENT / SERVER APPLICATION
+ **/
+
 package Server;
 
 import static Server.TCPServer.databasePath;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.text.SimpleDateFormat;
@@ -26,9 +24,6 @@ import java.util.concurrent.TimeUnit;
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.*;
-import java.nio.file.attribute.*;
-import java.text.DateFormat;
-import java.util.*;
 
 /**
  *
@@ -45,24 +40,29 @@ public class ClientConnection extends Thread {
     String TYPE_TEXT = "B";
     String storageRoot = "./storage/";
     String currentDir = "./storage/";
-    //String txtContent;
     Socket connectionSocket;
     File file;
     boolean connected;
     long BYTE_PER_MS = 50;
 
-    
+    /**
+     * Constructor
+    **/
     ClientConnection(Socket socket){
         this.connectionSocket = socket;
         this.connected = true;
         createConnections();
         sendMessage("+MIT-localhost SFTP Service");
-        //-MIT-localhost Out to Lunch
         this.authenticationController = new AuthenticationController();
     }
     
+    /**
+     * Run when thread is started
+     * Waits for command from client
+     * Runs relevant function
+    **/
     @Override
-    public void run() { // run when call start
+    public void run() {
 	
 	while(connected) {             
             
@@ -70,7 +70,7 @@ public class ClientConnection extends Thread {
             
                 String authenticationRespone;
 
-                // original
+                // Wait for command from client
                 System.out.println("WAITING FOR INPUT");
                 try { 
                     clientSentence = receiveMessage();
@@ -78,10 +78,11 @@ public class ClientConnection extends Thread {
                     Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
-                System.out.println("GOT INPUT: " + clientSentence);
+                System.out.println("FROM CLIENT: " + clientSentence);
 
                 String[] clientCommands = clientSentence.split(" ");
 
+                // Run function for command specified by client
                 if(null == clientCommands[0]){
                     System.out.println("-INVALID COMMAND");
                 }
@@ -208,6 +209,9 @@ public class ClientConnection extends Thread {
         
     }
 
+    /**
+     * Creates the connections between server and client and other components used
+    **/
     private void createConnections() {
         
         // Input Connection
@@ -227,16 +231,24 @@ public class ClientConnection extends Thread {
         // Database Connection
         file = new File(databasePath);
         if(file.exists() && !file.isDirectory()) { 
-            System.out.println("Database file found :)");
+            System.out.println("Database file found");
         } else {
             System.out.println("Databse file not found.");
+            try {
+                connectionSocket.close();
+            } catch (IOException ex) {
+                Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
         
     }    
     
+    /**
+     * Get null terminated message from client
+    **/
     private String receiveMessage() throws IOException {
         String sentence = "";
-        int character = 0;
+        int character;
 
         while (true){
             
@@ -246,12 +258,15 @@ public class ClientConnection extends Thread {
                 break;
             }
 
-            sentence = sentence.concat(Character.toString((char)character));
+            sentence = sentence.concat(Character.toString((char)character)); // Add read character to command sentence
         }
 
         return sentence;
     }
     
+    /**
+     * Send null terminated message to client
+    **/
     private void sendMessage(String message){
         
         try { 
@@ -266,7 +281,12 @@ public class ClientConnection extends Thread {
         
     }
     
-    
+    /**
+     * Switch file transfer type
+     * A = Ascii
+     * B = Binary
+     * C = Continuous
+    **/
     private void TYPE(String[] clientCommands) throws IOException{
         if(null == clientCommands[1]) {
             sendMessage("-Type not valid");
@@ -290,6 +310,10 @@ public class ClientConnection extends Thread {
         
     }
 
+    /**
+     * Resets Authentication
+     * Closes connection
+    **/
     private void DONE() throws IOException {
         authenticationController.reset();
         connected = false;
@@ -297,12 +321,20 @@ public class ClientConnection extends Thread {
         connectionSocket.close();
     }
     
+    /**
+     * LIST files and folders in specified directory
+     * If directory isn't specified lists files and folders in current working directory
+     * Supports two list types { F | V }
+     * F: Non detailed list
+     * V: Detailed list
+     * NOTE: requested directory is appended onto Storage root NOT current working directory
+    **/
     private void LIST(String[] clientCommands){
         
         String requestedDir;
-        if(clientCommands.length == 2){ // no requested directory
-            requestedDir = currentDir; // change to equal current directory when cdir implemented
-        } else {
+        if(clientCommands.length == 2){ // means no requested directory provided - user current working directory
+            requestedDir = currentDir; 
+        } else { // request dir provided - user it
             requestedDir = storageRoot + clientCommands[2];
         }
         
@@ -310,11 +342,12 @@ public class ClientConnection extends Thread {
             sendMessage("-Incompatible type requested, supported types are { F | V }");
         }
         
+        // Perform correct list for specified type
         else switch (clientCommands[1]) {
             
+            // Non detailed list
             case "F":
                
-                System.out.println("F List");
                 File dir = new File(requestedDir);
                 
                 if(dir.isDirectory() && dir.exists()){
@@ -327,13 +360,12 @@ public class ClientConnection extends Thread {
                         fileListString = fileListString.concat(("Folder: " + dirName  + '\n'));
                     }
                     
-                    // List File
+                    // List Files
                     File[] filesList = dir.listFiles(); 
 
                     for (File fileQuery : filesList) {
 
                         if (fileQuery.isFile()) {
-                            System.out.println(fileQuery.getName());
                             fileListString = fileListString.concat("File: " + fileQuery.getName() + '\n');
                         }
                     }   
@@ -345,6 +377,7 @@ public class ClientConnection extends Thread {
                 
                 break;
                 
+            // Detailed list
             case "V":
                 
                 SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
@@ -354,7 +387,6 @@ public class ClientConnection extends Thread {
                 String createdDate = " ";
                 String lastModified;
                 String fileSize;
-                System.out.println("V List");
                 File dir2 = new File(requestedDir);
                 
                 if(dir2.isDirectory() && dir2.exists()){
@@ -388,26 +420,26 @@ public class ClientConnection extends Thread {
                                 multiplication += 1;
                             }
 
+                            // Get correct unit for file size
                             switch (multiplication) {
                                 case 1:
                                     fileSize = ( df.format(fileSizeDouble) + " B" ); //B
                                     break;
                                 case 2:
-                                    fileSize = ( df.format(fileSizeDouble) + " KB" ); //B
+                                    fileSize = ( df.format(fileSizeDouble) + " KB" ); //KB
                                     break;
                                 case 3:
-                                    fileSize = ( df.format(fileSizeDouble) + " MB" ); //B
+                                    fileSize = ( df.format(fileSizeDouble) + " MB" ); //MB
                                     break;
                                 case 4:
-                                    fileSize = ( df.format(fileSizeDouble) + " GB" ); //B
+                                    fileSize = ( df.format(fileSizeDouble) + " GB" ); //GB
                                     break;
                                 default:
                                     fileSize = " ";
                                     break;
                             }
 
-                            // Created Time - Reference: https://stackoverflow.com/questions/2723838/determine-file-creation-date-in-java
-
+                            // Get file created time - Reference: https://stackoverflow.com/questions/2723838/determine-file-creation-date-in-java
                             BasicFileAttributes attributes = null;
                             try
                             {
@@ -431,8 +463,13 @@ public class ClientConnection extends Thread {
                                         (creationDate.getYear() + 1900);
                             }
 
+                            // Get file name
                             fileName = fileQuery.getName();
+                            
+                            // Get last modified date
                             lastModified = sdf.format(fileQuery.lastModified());
+                            
+                            // Format output
                             String detailedFile = "File Name: " + fileName +  " | File Owner: " + fileOwner + " | Date Created: " + createdDate + " | Last Modified: " + lastModified + " | File Size: " + fileSize + '\n';
                             fileListString2 = fileListString2.concat(detailedFile);
                         }
@@ -453,14 +490,23 @@ public class ClientConnection extends Thread {
         }
     }
 
+    /**
+     * Change working directory to directory specified
+     * If user wishes to change working directory to root then "/" must be the specified directory
+     * NOTE: requested directory is appended onto storage root NOT current working directory
+    **/
     private void CDIR(String[] clientCommands) throws IOException {
         
         String requestedDir;
+        
+        // Get correct request directory
         if("/".equals(clientCommands[1])){
             requestedDir = (storageRoot);
         } else {
             requestedDir = (storageRoot + clientCommands[1] + "/");
         }
+        
+        // test file to check if requested directory is a directory
         File testFile = new File(requestedDir);
         
         if (!testFile.isDirectory()){
@@ -469,35 +515,39 @@ public class ClientConnection extends Thread {
              
         } else {
             
+            // User needs to provide correct user/pass again to change dir
             boolean tempAuth;
             boolean tempAcctFound = false;
             boolean tempPassFound = false;
             
-            if(authenticationController.superID){
+            if(authenticationController.superID){ // admin accounts
                 tempAuth = true;
                 
             } else {
-                if("-".equals(authenticationController.acct)){
+                
+                if("-".equals(authenticationController.acct)){ // USER doesn't require an account
                     sendMessage( "+directory ok, send password");
                     tempAcctFound = true;
-                } else if("-".equals(authenticationController.pass)){
+                } else if("-".equals(authenticationController.pass)){ // USER doesn't require a password
                     sendMessage( "+directory ok, send account");
                     tempPassFound = true;
-                } else {
+                } else { // USER needs both account and password
                     sendMessage( "+directory ok, send account/password");
                 }
                 tempAuth = false;
+                
             }
             
             while(!tempAuth){
                 
+                // Get user input
                 try { 
                     clientSentence = receiveMessage();
                 } catch (IOException ex) {
                     Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
-                System.out.println("GOT INPUT: " + clientSentence);
+                System.out.println("FROM CLIENT: " + clientSentence);
 
                 String[] clientCommands2 = clientSentence.split(" ");
                 String authenticationRespone;
@@ -505,12 +555,14 @@ public class ClientConnection extends Thread {
                 if(null == clientCommands2[0]){
                     System.out.println("-INVALID COMMAND");
                 }
+                
+                // perform correct funtion
                 else switch (clientCommands2[0]) {
 
                     case "ACCT":
                         
                         if(clientCommands2.length == 2){
-                            tempAcctFound = authenticationController.checkAcct(clientCommands2[1]);
+                            tempAcctFound = authenticationController.checkAcct(clientCommands2[1]); // validate provide account
                             
                             if(tempAcctFound && tempPassFound){
                                 tempAuth = true;
@@ -530,7 +582,7 @@ public class ClientConnection extends Thread {
                     case "PASS":
                         
                         if(clientCommands2.length == 2){
-                            tempPassFound = authenticationController.checkPass(clientCommands2[1]);
+                            tempPassFound = authenticationController.checkPass(clientCommands2[1]); // validate provide account
                             
                             if(tempAcctFound && tempPassFound){
                                 tempAuth = true;
@@ -557,6 +609,10 @@ public class ClientConnection extends Thread {
         }
     }
     
+    /**
+     * Delete specified file
+     * NOTE: specified file is searched from the current working directory NOT storage root
+    **/
     private void KILL(String[] clientCommands) throws IOException{
         
         // Reference: https://www.geeksforgeeks.org/delete-file-using-java/
@@ -578,6 +634,10 @@ public class ClientConnection extends Thread {
         
     }
     
+    /**
+     * Renames specified file on server storage
+     * NOTE: Specified file is searched from current working directory NOT storage root
+    **/
     private void NAME(String[] clientCommands) throws IOException{
         
         File testFile = new File(currentDir + clientCommands[1]);
@@ -586,11 +646,10 @@ public class ClientConnection extends Thread {
         if(testFile.exists()){
             
             sendMessage("+File exists");
-            System.out.println("+File exists" + '\n');
       
             clientSentence = receiveMessage();
             String[] clientCommands2 = clientSentence.split(" ");     
-            boolean cont = false;
+            boolean cont = false; // boolean to make sure system can only proceed if TOBE is received
             
             if("TOBE".equals(clientCommands2[0]) && clientCommands.length == 2){
                 cont = true;
@@ -609,31 +668,33 @@ public class ClientConnection extends Thread {
 
             if (file2.exists()){
                sendMessage("-File wasn't renamed because file with specified name already exists.");
-               System.out.println("-File wasn't renamed because file with specified name already exists.");
             } 
             else {
+                
                 // Rename file (or directory)
                 boolean success = testFile.renameTo(file2);
 
                 if (!success) {
                    // File was not successfully renamed
                    sendMessage("-File wasn't renamed because ");
-                   System.out.println("-File wasn't renamed because ");
                 } else {
                    sendMessage("+" + oldFileName + " renamed to " + file2.getName());
-                   System.out.println("+" + oldFileName + " renamed to " + file2.getName());
                 }
                 
             }
  
         }
         else{
+            // Can't find specified file
             sendMessage("-Can't find " + clientCommands[1]);
-            System.out.println("-Can't find " + clientCommands[1]);
         }
         
     }
 
+    /**
+     * Send Specified file FROM Server TO Client
+     * NOTE: Specified file is searched from current working directory NOT storage root
+    **/
     private void RETR(String[] clientCommands) throws IOException {
         
         File requestedFile = new File(currentDir + clientCommands[1]);
@@ -643,16 +704,17 @@ public class ClientConnection extends Thread {
         }
         else if (requestedFile.exists()){
             
+            // Get size of requested file
             long length = requestedFile.length();
-            System.out.println("File size: " + length);
             sendMessage(Long.toString(length));
             
             // Receive response
             String userCommand2;
             String [] userCommands;
+            
+            // Only continue if SEND or STOP is received from client
             while(true){
                 
-                System.out.println("Type: SEND or STOP");
                 userCommand2 = receiveMessage();
                 userCommands = userCommand2.split(" ");
                 
@@ -662,10 +724,10 @@ public class ClientConnection extends Thread {
                 
             }
             
-            if("SEND".equals(userCommands[0])){
+            if("SEND".equals(userCommands[0])){ // send file
                 sendFileBytes(requestedFile);
             }
-            else if ("STOP".equals(userCommands[0])){
+            else if ("STOP".equals(userCommands[0])){ // don't send file
                 sendMessage("+ok, RETR aborted");
             }
             
@@ -674,35 +736,44 @@ public class ClientConnection extends Thread {
         
     }
     
-    
+    /**
+     * Receives file FROM client and stores it in Servers storage
+     * Three STOR types are supported { NEW | OLD | APP }
+     * NEW: Generates new file if one with specified name exists
+     * OLD: Overwrites file if one with specified name exists
+     * APP: Appends onto existing file if one with specified name exists
+     * NOTE: Specified file is searched from current working directory NOT storage root
+    **/
     private void STOR(String[] clientCommands) {
         
         if(null == clientCommands[1]){
             sendMessage("STOR type not supported, supported types are { NEW | OLD | APP }");
         } else {
             
-            String clientCommand = "";
-            File newFile = new File(currentDir + clientCommands[2]);
+            String clientCommand;
+            File newFile = new File(currentDir + clientCommands[2]); // create new file
             
+            // Perform correct specified STOR type
             switch (clientCommands[1]) {
             
             case "NEW": // New generation of file
                 
-                if(newFile.exists() && newFile.isFile()){ 
+                if(newFile.exists() && newFile.isFile()){ // Must generate a new file
 
                     int fileVersion = 1;
                     String[] splitFileName = null;
                     boolean validFile = true;
 
+                    // Keep updating file name until we find one which doesn't exist
                     while(newFile.exists()){
 
                         fileVersion++;
                         splitFileName = clientCommands[2].split("\\."); // split file name and the file extension
-                        System.out.println("Filename: " + clientCommands[2]);
 
                         try {
                             newFile = new File(currentDir + splitFileName[0] + "(" + fileVersion + ")." + splitFileName[1]);
-                        } catch(ArrayIndexOutOfBoundsException err){
+                        } catch(ArrayIndexOutOfBoundsException err){ // File doesn't have an extension so it's not supported
+                            
                             System.out.println(err);
                             validFile = false;
                             break;
@@ -713,9 +784,11 @@ public class ClientConnection extends Thread {
                     
                     if(validFile){
                         
-                        sendMessage("+File exists, will create new generation of file");    
+                        sendMessage("+File exists, will create new generation of file");  
+                        
                         try {
                         
+                            // Get file size of file to be sent
                             clientCommand = receiveMessage();
                             long requestedFileSize = Long.valueOf(clientCommand);
 
@@ -732,12 +805,14 @@ public class ClientConnection extends Thread {
                     }
                     
                     
-                } else {
+                } 
+                else { // Create new file
                     
                     sendMessage("+File does not exist, will create new one");
                     
                     try {
                         
+                        // Get file size of file to be sent
                         clientCommand = receiveMessage();
                         long requestedFileSize = Long.valueOf(clientCommand);
                         getFile(clientCommands[2], false, requestedFileSize);
@@ -765,6 +840,7 @@ public class ClientConnection extends Thread {
                 
                 try {
                     
+                    // Get file size of file to be sent
                     clientCommand = receiveMessage();
                     long requestedFileSize = Long.valueOf(clientCommand);
                     getFile(clientCommands[2], false, requestedFileSize);
@@ -778,11 +854,12 @@ public class ClientConnection extends Thread {
                 
             case "APP":
                 
-                if(newFile.exists() && newFile.isFile()){ 
+                if(newFile.exists() && newFile.isFile()){ // Need to append onto file
                     
                     sendMessage("+Will append to file");
                     try {
                         
+                        // Get file size of file to be sent
                         clientCommand = receiveMessage();
                         long requestedFileSize = Long.valueOf(clientCommand);
                         getFile(clientCommands[2], true, requestedFileSize);
@@ -791,11 +868,13 @@ public class ClientConnection extends Thread {
                         Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     
-                } else {
+                } 
+                else { // Create new file
                     
                     sendMessage("+Will create file");
                     try {
                         
+                        // Get file size of file to be sent
                         clientCommand = receiveMessage();
                         long requestedFileSize = Long.valueOf(clientCommand);
                         getFile(clientCommands[2], false, requestedFileSize);
@@ -817,17 +896,22 @@ public class ClientConnection extends Thread {
         
     }
     
+    /**
+     * Retrieves file
+     * Sends/receives messages to/from client and performs correct logic
+    **/
     private void getFile(String outputFileName, boolean append, long requestedFileSize){
         
         File dir = new File(currentDir);
-        System.out.println("Available space: " + dir.getUsableSpace());
 
+        // Check if there is enough space in directory to store file
         if(dir.getUsableSpace() > requestedFileSize){
 
             sendMessage("+ok, waiting for file");
             Boolean fileSent = false;
+            
             try {
-                fileSent = readFileBytes(outputFileName, append, requestedFileSize);
+                fileSent = readFileBytes(outputFileName, append, requestedFileSize); // get file data from buffer
             } catch (IOException ex) {
                 Logger.getLogger(ClientConnection.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -838,7 +922,8 @@ public class ClientConnection extends Thread {
                 sendMessage("-Couldn't save because file transfer timeout");
             }
 
-        } else {
+        } 
+        else { // not enough space in directory
 
             sendMessage("-Not enough room, don't send it");
 
@@ -846,17 +931,22 @@ public class ClientConnection extends Thread {
         
     }
             
-    // reference: https://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets#comment88270571_9520911
-    // reference: https://stackoverflow.com/questions/38732970/java-sending-and-receiving-file-over-sockets
+    /**
+     * Sends file to client
+     * Supports three file transfer modes controlled by TYPE function
+     * ASCII, BINARY, CONTINUOUS
+     * reference: https://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets#comment88270571_9520911
+     * reference: https://stackoverflow.com/questions/38732970/java-sending-and-receiving-file-over-sockets
+    **/
     private void sendFileBytes(File requestedFile) throws IOException{
         
-        if("A".equals(TYPE_TEXT)){
+        if("A".equals(TYPE_TEXT)){ // ASCII mode
             
             byte[] bytes = new byte[(int) requestedFile.length()];
             try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(requestedFile))) {
                 outToClient.flush();
                 // Read and send by byte
-                int count = 0;
+                int count;
                 while ((count = bis.read(bytes)) >= 0) {
                     outToClient.write(bytes, 0, count);
                 }
@@ -864,7 +954,7 @@ public class ClientConnection extends Thread {
             }
             
         }
-        else if("B".equals(TYPE_TEXT) || "C".equals(TYPE_TEXT)){ // Binary, Continuous
+        else if("B".equals(TYPE_TEXT) || "C".equals(TYPE_TEXT)){ // BINARY, CONTINUOUS Mode
             
             DataOutputStream fileDataToClient;
             try ( 
@@ -881,7 +971,13 @@ public class ClientConnection extends Thread {
 
     }
     
-    // reference: https://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets#comment88270571_9520911
+    /**
+     * Receives files from client
+     * Supports three file transfer modes controlled by TYPE function
+     * ASCII, BINARY, CONTINUOUS
+     * reference: https://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets#comment88270571_9520911
+     * reference: https://stackoverflow.com/questions/38732970/java-sending-and-receiving-file-over-sockets
+    **/
     private boolean readFileBytes(String outputFileName, boolean append, long requestedFileSize) throws IOException{
         
         File newFile = new File(currentDir + outputFileName);
@@ -890,20 +986,21 @@ public class ClientConnection extends Thread {
         long msPassed; // ms
         long waitTime = (requestedFileSize / BYTE_PER_MS) + BYTE_PER_MS;
         
-        if("A".equals(TYPE_TEXT)){ // Ascii
+        if("A".equals(TYPE_TEXT)){ // ASCII mode
             
             try (FileOutputStream fos = new FileOutputStream(newFile, append); BufferedOutputStream bos = new BufferedOutputStream(fos)) {
 
-                d1 = new Date();
+                d1 = new Date(); // start time
+                
                 for(int j = 0; j < requestedFileSize; j++){
                     
                     bos.write(inFromClient.read());
                     
-                    d2 = new Date();
+                    d2 = new Date(); // to get time elapsed
                     msPassed = (d2.getTime() - d1.getTime());
                     System.out.println("Time passed: " + msPassed + " Timeout time: " + ((int) waitTime) );
                     
-                    if(msPassed >= waitTime){
+                    if(msPassed >= waitTime){ // timeout
                         bos.flush();
                         bos.close();
                         fos.close();
@@ -918,32 +1015,34 @@ public class ClientConnection extends Thread {
             }
             
         }
-        else if("B".equals(TYPE_TEXT) || "C".equals(TYPE_TEXT)){ 
+        else if("B".equals(TYPE_TEXT) || "C".equals(TYPE_TEXT)){ // BINARY, CONTINUOUS mode
             
-            try (FileOutputStream fos = new FileOutputStream(newFile, append)) { // Binary, Continuous
+            try (FileOutputStream fos = new FileOutputStream(newFile, append)) {
                 
                 byte[] bytes = new byte[(int) requestedFileSize];
                 DataInputStream fileDataFromClient = new DataInputStream(new BufferedInputStream(connectionSocket.getInputStream()));
 
                 int bytesRead = 0;
                 int count;
-                d1 = new Date();
+                d1 = new Date(); // start time
 
                 while (true) {
+                    
                     count = fileDataFromClient.read(bytes);
                     bytesRead += count;
                     fos.write(bytes, 0, count);
+                    
                     System.out.println("Bytes Read Count: " + bytesRead + " File Size: " + ((int) requestedFileSize) );
 
-                    if (bytesRead >= ((int) requestedFileSize)){ // MAX - If it's above 8192 you'll receive garbage value
-                        System.out.println("BREAK " );
+                    if (bytesRead >= ((int) requestedFileSize)){ // If we read the expected amount of bytes then break loop
                         break;
                     }
 
-                    d2 = new Date();
+                    d2 = new Date(); // get time elapsed
                     msPassed = (d2.getTime() - d1.getTime());
                     System.out.println("Time passed: " + msPassed + " Timeout time: " + ((int) waitTime) );
-                    if(msPassed >= waitTime){
+                    
+                    if(msPassed >= waitTime){ // timeout
                         fos.flush();
                         return false;
                     }
